@@ -1,0 +1,9 @@
+useDynLib(Sieve, .registration=TRUE)
+importFrom(Rcpp, evalCpp)
+export(sieve_preprocess)
+export(sieve_solver)
+export(sieve_predict)
+#' @importFrom combinat permn
+importFrom("stats", "coef", "quantile", "rnorm", "runif")
+importFrom("utils", "combn")
+importFrom("glmnet", "glmnet")

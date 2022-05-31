@@ -1,0 +1,14 @@
+Package: Sieve
+Type: Package
+Title: Nonparametric Estimation by the Method of Sieves
+Version: 1.0
+Date: 2022-05-27
+Author: Tianyu Zhang
+Maintainer: Tianyu Zhang <zty@uw.edu>
+Description: This is package performs nonparametric regression or estimation of conditional mean functions by the method of sieves. The method is suitable for problems with multivariate or moderate high-dimensional features. The main estimator in this package, penalized sieve estimator, is adaptive to the feature dimension with provable theoretical guarantees. Moreover, such a method is computationally tractable in the sense it typically has a polynomial dependence (rather than an exponential one) on the feature dimension.
+License: GPL-2
+Imports: Rcpp (>= 1.0.7),
+	 combinat,
+	 glmnet
+LinkingTo: Rcpp, RcppArmadillo
+RoxygenNote: 7.1.1
