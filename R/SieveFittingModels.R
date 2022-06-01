@@ -23,6 +23,16 @@
 #' \item{index_matrix}{a matrix. It specifies what are the product basis functions used when constructing the design matrix Phi. It has a dimension basisN x dimension of original features. There are at most interaction_order many non-1 elements in each row.}
 #' \item{basisN}{a number. Number of sieve basis functions.}
 #' \item{norm_para}{a matrix. It records how each dimension of the feature/predictor is rescaled, which is useful when rescaling the testing sample's predictors.}
+#' @examples 
+#' xdim <- 1 #1 dimensional feature
+#' #generate 1000 training samples
+#' TrainData <- Sieve:::GenTrain(s.size = 1000, xdim = xdim)
+#' #use 50 cosine basis functions
+#' type <- 'sobolev1cos'
+#' basisN <- 50 
+#' sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+#'                                 basisN = basisN, type = type)
+#' sieve.model$Phi #Phi is the design matrix
 #' @export
 #'
 sieve_preprocess <- function(X, basisN = NULL, maxj = NULL, 
