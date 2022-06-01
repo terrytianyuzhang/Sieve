@@ -8,7 +8,7 @@ sieve_preprocess(
   X,
   basisN = NULL,
   maxj = NULL,
-  type = "sobolev1cos",
+  type = "cosine",
   interaction_order = 3,
   index_matrix = NULL,
   norm_feature = T,
@@ -54,9 +54,32 @@ xdim <- 1 #1 dimensional feature
 #generate 1000 training samples
 TrainData <- Sieve:::GenTrain(s.size = 1000, xdim = xdim)
 #use 50 cosine basis functions
-type <- 'sobolev1cos'
+type <- 'cosine'
 basisN <- 50 
 sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
                                 basisN = basisN, type = type)
-sieve.model$Phi #Phi is the design matrix
+#sieve.model$Phi #Phi is the design matrix
+
+\dontrun{
+xdim <- 5 #1 dimensional feature
+#generate 1000 training samples
+TrainData <- Sieve:::GenTrain(s.size = 1000, xdim = xdim, 
+                              frho = 'additive', frho.para = 2)
+#use 1000 basis functions
+#each of them is a product of univariate cosine functions.
+
+type <- 'cosine'
+basisN <- 1000 
+sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+                                basisN = basisN, type = type)
+#sieve.model$Phi #Phi is the design matrix
+
+#fit a nonaprametric additive model by setting interaction_order = 1
+sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+                                basisN = basisN, type = type, 
+                                interaction_order = 1)
+#sieve.model$index_matrix #for each row, there is at most one entry >= 2. 
+#this means there are no basis functions varying in more than 2-dimensions are used
+#that is, we are fitting additive models without interaction between features.
+}
 }

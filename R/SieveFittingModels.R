@@ -28,15 +28,38 @@
 #' #generate 1000 training samples
 #' TrainData <- Sieve:::GenTrain(s.size = 1000, xdim = xdim)
 #' #use 50 cosine basis functions
-#' type <- 'sobolev1cos'
+#' type <- 'cosine'
 #' basisN <- 50 
 #' sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
 #'                                 basisN = basisN, type = type)
-#' sieve.model$Phi #Phi is the design matrix
+#' #sieve.model$Phi #Phi is the design matrix
+#' 
+#' \dontrun{
+#' xdim <- 5 #1 dimensional feature
+#' #generate 1000 training samples
+#' TrainData <- Sieve:::GenTrain(s.size = 1000, xdim = xdim, 
+#'                               frho = 'additive', frho.para = 2)
+#' #use 1000 basis functions
+#' #each of them is a product of univariate cosine functions.
+#' 
+#' type <- 'cosine'
+#' basisN <- 1000 
+#' sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+#'                                 basisN = basisN, type = type)
+#' #sieve.model$Phi #Phi is the design matrix
+#' 
+#' #fit a nonaprametric additive model by setting interaction_order = 1
+#' sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+#'                                 basisN = basisN, type = type, 
+#'                                 interaction_order = 1)
+#' #sieve.model$index_matrix #for each row, there is at most one entry >= 2. 
+#' #this means there are no basis functions varying in more than 2-dimensions are used
+#' #that is, we are fitting additive models without interaction between features.
+#' }
 #' @export
 #'
 sieve_preprocess <- function(X, basisN = NULL, maxj = NULL, 
-                             type = 'sobolev1cos', 
+                             type = 'cosine', 
                              interaction_order = 3, index_matrix = NULL,
                              norm_feature = T, norm_para = NULL){
   
@@ -378,7 +401,7 @@ truef <- function(x, FUN = 'linear', para = NULL){
       }else if(FUN == 'lineartensor'){
         D <- para
     for(i in 1:(D-1)){
-      # y <- y + psi(x[i], 3, 'sobolev1cos') + psi(x[i], 2, 'sobolev1cos')*psi(x[i+1], 2, 'sobolev1cos')
+      # y <- y + psi(x[i], 3, 'cosine') + psi(x[i], 2, 'cosine')*psi(x[i+1], 2, 'cosine')
       y <- y + psi(x[i], 3, 'legendre') + psi(x[i], 2, 'legendre')*psi(x[i+1], 2, 'legendre')
     }
   }else if(FUN == 'turntensor'){
@@ -401,13 +424,13 @@ truef <- function(x, FUN = 'linear', para = NULL){
         for(i in 1:para$basisN){ #index_matrix is created in the Gen_Train function
           # y <- y + (prod(index_matrix[i,]))^(-1.6) * multi_psi(x, index_matrix[i,], 'legendre')
           if(prod(index_matrix[i,]) <= 8){
-            # y <- y + multi_psi(x, index_matrix[i,], 'sobolev1cos')
+            # y <- y + multi_psi(x, index_matrix[i,], 'cosine')
             # print(index_matrix[i,])
-            y <- y + 1* multi_psi(x, index_matrix[i,], 'sobolev1cos')
+            y <- y + 1* multi_psi(x, index_matrix[i,], 'cosine')
             }else{
               #######!!!!!!!!!!!!!!!!###########
-            y <- y +0*para$coefs[i] * (prod(index_matrix[i,]))^(-1.6) * multi_psi(x, index_matrix[i,], 'sobolev1cos')
-            # y <- y + para$coefs[i] * (prod(index_matrix[i,]))^(-1.6) * multi_psi(x, index_matrix[i,], 'sobolev1cos')
+            y <- y +0*para$coefs[i] * (prod(index_matrix[i,]))^(-1.6) * multi_psi(x, index_matrix[i,], 'cosine')
+            # y <- y + para$coefs[i] * (prod(index_matrix[i,]))^(-1.6) * multi_psi(x, index_matrix[i,], 'cosine')
             }
           # y <- y + 3*(prod(index_matrix[i,]))^(-1.5) * multi_psi(max(x-0.5,0), index_matrix[i,], 'sobolev1')
         }
@@ -528,14 +551,6 @@ tensor_kernel <- function(x, z, type){
   return(pik)
 }
 
-# xdim <- 10
-# frho <- 'lineartensor'
-# s.size <- 1e3
-# TrainData <- GenTrain(s.size = s.size, xdim = xdim, 
-#                       frho = frho, noise.para = 0.1)
-# X <- as.matrix(TrainData[,2:(xdim+1)])
-# type <- 'sobolev1'
-# KRR_preprocess(X,type)
 KRR_preprocess <- function(X, type, kernel.para = -1){
   KnSVD <- Kernel_M_C(X, type, kernel.para) #call the C function to do svd
   lambdas <- exp(seq(log(1e-4*min(KnSVD$s)),
@@ -560,13 +575,6 @@ KRR.fit_C <- function(model_pre, Y, lambda){
   return(list(beta.hat = beta, X = model_pre$X, type = model_pre$type,
               kernel.para = model_pre$kernel.para, lambda = lambda))
 }
-  
-# X <- matrix(c(0.5,0.2,0.4, 0.5,0.3,0.4), nrow = 2)
-# lambda <- 0.01
-# Y <- c(1,2)
-# type <- 'gaussian'
-# X <- data.frame(TrainData[,2:(xdim+1)])
-# Y <- data.frame(TrainData$Y)
 
 KRR.fit <- function(X, Y, lambda, type){
   s.size <- dim(X)[1]

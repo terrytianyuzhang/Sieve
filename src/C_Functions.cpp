@@ -136,7 +136,7 @@ double psi(double x, int j, String type){
     }else{
       return sin((2*(j-1) - 1)*M_PI*x/2);
     }
-  }else if(type == "sobolev1cos"){ // sobolev 1 using cosine function
+  }else if(type == "cosine"){ // sobolev 1 using cosine function
     if(j == 1){
       return 1;
     }else{
@@ -290,19 +290,23 @@ arma::mat Design_M_C(arma::mat X, int basisN, String type, arma::mat index_matri
   int xdim = X.n_cols;
   
   arma::mat Phi = arma::mat(size, basisN);
-  for (int i = 0; i < size; i++) {
-    // if (i % 1000 == 0){Rcpp::checkUserInterrupt();} //interrupt when the data is too large
-    arma::vec Xrowi = arma::vectorise(X.row(i));
-    for (int j = 0; j < basisN; j++){ // loop for Jn many basis functions
-      if (j % 1000 == 0){Rcpp::checkUserInterrupt();} //interrupt when the data is too large
-      // Phi(i,j) = multi_psi(Xrowi, arma::vectorise(index_matrix.row(j)),type);
-      double psix = 1;
-      for(int k = 0; k < xdim; k++){
-        if(index_matrix(j,k) > 1){
-          psix = psix * psicos(Xrowi(k), index_matrix(j,k));
+  
+  ////cosine basis
+  if(type == "cosine"){
+    for (int i = 0; i < size; i++) {
+      // if (i % 1000 == 0){Rcpp::checkUserInterrupt();} //interrupt when the data is too large
+      arma::vec Xrowi = arma::vectorise(X.row(i));
+      for (int j = 0; j < basisN; j++){ // loop for Jn many basis functions
+        if (j % 1000 == 0){Rcpp::checkUserInterrupt();} //interrupt when the data is too large
+        // Phi(i,j) = multi_psi(Xrowi, arma::vectorise(index_matrix.row(j)),type);
+        double psix = 1;
+        for(int k = 0; k < xdim; k++){
+          if(index_matrix(j,k) > 1){
+            psix = psix * psicos(Xrowi(k), index_matrix(j,k));
+          }
         }
+        Phi(i,j) = psix;
       }
-      Phi(i,j) = psix;
     }
   }
   return Phi;

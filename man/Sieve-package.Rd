@@ -30,7 +30,7 @@ Maintainer: \packageMaintainer{Sieve}
 
 xdim <- 5
 basisN <- 1000
-type <- 'sobolev1cos'
+type <- 'cosine'
 
 TrainData <- Sieve:::GenTrain(s.size = 300, xdim = xdim, 
             frho = 'additive', frho.para = xdim/2)
