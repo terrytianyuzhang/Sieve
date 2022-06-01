@@ -129,6 +129,27 @@ double psicos(double x, int j){
 }
 
 // [[Rcpp::export]]
+double psisin(double x, int j){
+  return sin((2*(j-1) - 1)*M_PI*x/2);
+}
+
+// [[Rcpp::export]]
+double psipolytri(double x, int j){
+  if(j ==2){
+    return x;
+  }else if(j % 2 == 1){
+    return pow(2,0.5)*cos(2*M_PI*(j-1)/2*x);
+  }else{
+    return pow(2,0.5)*sin(2*M_PI*(j-2)/2*x);
+  }
+}
+
+// [[Rcpp::export]]
+double psipoly(double x, int j){
+  return pow(x,j-1);
+}
+
+// [[Rcpp::export]]
 double psi(double x, int j, String type){
   if(type == "sobolev1"){ // sobolev 1
     if(j == 1){
@@ -303,6 +324,54 @@ arma::mat Design_M_C(arma::mat X, int basisN, String type, arma::mat index_matri
         for(int k = 0; k < xdim; k++){
           if(index_matrix(j,k) > 1){
             psix = psix * psicos(Xrowi(k), index_matrix(j,k));
+          }
+        }
+        Phi(i,j) = psix;
+      }
+    }
+  }else if(type == "sine"){
+    for (int i = 0; i < size; i++) {
+      // if (i % 1000 == 0){Rcpp::checkUserInterrupt();} //interrupt when the data is too large
+      arma::vec Xrowi = arma::vectorise(X.row(i));
+      for (int j = 0; j < basisN; j++){ // loop for Jn many basis functions
+        if (j % 1000 == 0){Rcpp::checkUserInterrupt();} //interrupt when the data is too large
+        // Phi(i,j) = multi_psi(Xrowi, arma::vectorise(index_matrix.row(j)),type);
+        double psix = 1;
+        for(int k = 0; k < xdim; k++){
+          if(index_matrix(j,k) > 1){
+            psix = psix * psisin(Xrowi(k), index_matrix(j,k));
+          }
+        }
+        Phi(i,j) = psix;
+      }
+    }
+  }else if(type == "polytri"){
+    for (int i = 0; i < size; i++) {
+      // if (i % 1000 == 0){Rcpp::checkUserInterrupt();} //interrupt when the data is too large
+      arma::vec Xrowi = arma::vectorise(X.row(i));
+      for (int j = 0; j < basisN; j++){ // loop for Jn many basis functions
+        if (j % 1000 == 0){Rcpp::checkUserInterrupt();} //interrupt when the data is too large
+        // Phi(i,j) = multi_psi(Xrowi, arma::vectorise(index_matrix.row(j)),type);
+        double psix = 1;
+        for(int k = 0; k < xdim; k++){
+          if(index_matrix(j,k) > 1){
+            psix = psix * psipolytri(Xrowi(k), index_matrix(j,k));
+          }
+        }
+        Phi(i,j) = psix;
+      }
+    }
+  }else if(type == "poly"){
+    for (int i = 0; i < size; i++) {
+      // if (i % 1000 == 0){Rcpp::checkUserInterrupt();} //interrupt when the data is too large
+      arma::vec Xrowi = arma::vectorise(X.row(i));
+      for (int j = 0; j < basisN; j++){ // loop for Jn many basis functions
+        if (j % 1000 == 0){Rcpp::checkUserInterrupt();} //interrupt when the data is too large
+        // Phi(i,j) = multi_psi(Xrowi, arma::vectorise(index_matrix.row(j)),type);
+        double psix = 1;
+        for(int k = 0; k < xdim; k++){
+          if(index_matrix(j,k) > 1){
+            psix = psix * psipoly(Xrowi(k), index_matrix(j,k));
           }
         }
         Phi(i,j) = psix;
