@@ -5,5 +5,5 @@ export(sieve_solver)
 export(sieve_predict)
 #' @importFrom combinat permn
 importFrom("stats", "coef", "quantile", "rnorm", "runif")
-importFrom("utils", "combn")
 importFrom("glmnet", "glmnet")
+importFrom("utils", "combn")
