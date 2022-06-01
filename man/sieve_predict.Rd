@@ -9,7 +9,7 @@ sieve_predict(model, testX, testY = NULL)
 \arguments{
 \item{model}{a list. Use the fitted model from sieve_solver.}
 
-\item{testX}{a matrix. Dimension equals to test sample size x feature diemnsion. Should be of a similar format as the training feature provided to sieve_preprocess.}
+\item{testX}{a data frame. Dimension equals to test sample size x feature diemnsion. Should be of a similar format as the training feature provided to sieve_preprocess.}
 
 \item{testY}{a vector. The outcome of testing samples (if known). Default is NULL. For regression problems, the algorithm also returns the testing mean-squared errors.}
 }

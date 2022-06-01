@@ -16,7 +16,7 @@ sieve_preprocess(
 )
 }
 \arguments{
-\item{X}{a matrix of original features. The (i,j)-th element is the j-th dimension of the i-th sample's feature vector. 
+\item{X}{a data frame containing original features. The (i,j)-th element is the j-th dimension of the i-th sample's feature vector. 
 So the number of rows equals to the sample size and the number of columns equals to the feature dimension.}
 
 \item{basisN}{number of sieve basis function. It is in general larger than the dimension of the original feature. 
@@ -48,4 +48,15 @@ A list containing the necessary information for next step model fitting. Typical
 }
 \description{
 Generate the design matrix for the downstream lasso-type penalized model fitting.
+}
+\examples{
+xdim <- 1 #1 dimensional feature
+#generate 1000 training samples
+TrainData <- Sieve:::GenTrain(s.size = 1000, xdim = xdim)
+#use 50 cosine basis functions
+type <- 'sobolev1cos'
+basisN <- 50 
+sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+                                basisN = basisN, type = type)
+sieve.model$Phi #Phi is the design matrix
 }
