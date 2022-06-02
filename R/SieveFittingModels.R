@@ -26,7 +26,7 @@
 #' @examples 
 #' xdim <- 1 #1 dimensional feature
 #' #generate 1000 training samples
-#' TrainData <- Sieve:::GenTrain(s.size = 1000, xdim = xdim)
+#' TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
 #' #use 50 cosine basis functions
 #' type <- 'cosine'
 #' basisN <- 50 
@@ -37,7 +37,7 @@
 #' \dontrun{
 #' xdim <- 5 #1 dimensional feature
 #' #generate 1000 training samples
-#' TrainData <- Sieve:::GenTrain(s.size = 1000, xdim = xdim, 
+#' TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim, 
 #'                               frho = 'additive', frho.para = 2)
 #' #use 1000 basis functions
 #' #each of them is a product of univariate cosine functions.
@@ -313,7 +313,7 @@ sieve_predict <- function(model, testX, testY = NULL){
 }
 
 
-GenTrain <- function(s.size, xdim = 1, x.dis = "uniform",
+GenSamples <- function(s.size, xdim = 1, x.dis = "uniform",
                      x.para = NULL, frho = 'linear', frho.para = 1e2,
                      y.type = 'continuous', noise.dis = 'normal',
                      noise.para = 0.5){
@@ -352,7 +352,10 @@ GenTrain <- function(s.size, xdim = 1, x.dis = "uniform",
         }
      
     }
+  }else if(y.type == 'binary'){
+    y <- apply(x, 1, truef, frho)
   }
+  
   traindata <- data.frame(cbind(y, x))
   
   #rename the columns
@@ -409,7 +412,8 @@ truef <- function(x, FUN = 'linear', para = NULL){
       for(j in i:xdim){
         y <- y+ (0.5 - abs(x[i]-0.5)) * (0.5 - abs(x[j]-0.5))
       }
-    }}else if(FUN == 'multiellipsoid'){
+    }
+  }else if(FUN == 'multiellipsoid'){
       y <- 0
       index_matrix <- para
       for(i in 1:(dim(index_matrix)[1])){ #index_matrix is created in the Gen_Train function
@@ -417,23 +421,23 @@ truef <- function(x, FUN = 'linear', para = NULL){
         y <- y + (prod(index_matrix[i,]))^(-1.5) * multi_psi(x, index_matrix[i,], 'sobolev1')
         # y <- y + 3*(prod(index_matrix[i,]))^(-1.5) * multi_psi(max(x-0.5,0), index_matrix[i,], 'sobolev1')
         }
-      }else if(FUN == 'STE'){
-        y <- 0
-        # y <- y+ (0.5 - abs(x[1]-0.5)) * (0.5 - abs(x[2]-0.5))
-        index_matrix <- para$index_matrix
-        for(i in 1:para$basisN){ #index_matrix is created in the Gen_Train function
-          # y <- y + (prod(index_matrix[i,]))^(-1.6) * multi_psi(x, index_matrix[i,], 'legendre')
-          if(prod(index_matrix[i,]) <= 8){
-            # y <- y + multi_psi(x, index_matrix[i,], 'cosine')
-            # print(index_matrix[i,])
-            y <- y + 1* multi_psi(x, index_matrix[i,], 'cosine')
-            }else{
-              #######!!!!!!!!!!!!!!!!###########
-            y <- y +0*para$coefs[i] * (prod(index_matrix[i,]))^(-1.6) * multi_psi(x, index_matrix[i,], 'cosine')
-            # y <- y + para$coefs[i] * (prod(index_matrix[i,]))^(-1.6) * multi_psi(x, index_matrix[i,], 'cosine')
-            }
-          # y <- y + 3*(prod(index_matrix[i,]))^(-1.5) * multi_psi(max(x-0.5,0), index_matrix[i,], 'sobolev1')
-        }
+  }else if(FUN == 'STE'){
+      y <- 0
+      # y <- y+ (0.5 - abs(x[1]-0.5)) * (0.5 - abs(x[2]-0.5))
+      index_matrix <- para$index_matrix
+      for(i in 1:para$basisN){ #index_matrix is created in the Gen_Train function
+        # y <- y + (prod(index_matrix[i,]))^(-1.6) * multi_psi(x, index_matrix[i,], 'legendre')
+        if(prod(index_matrix[i,]) <= 8){
+          # y <- y + multi_psi(x, index_matrix[i,], 'cosine')
+          # print(index_matrix[i,])
+          y <- y + 1* multi_psi(x, index_matrix[i,], 'cosine')
+          }else{
+            #######!!!!!!!!!!!!!!!!###########
+          y <- y +0*para$coefs[i] * (prod(index_matrix[i,]))^(-1.6) * multi_psi(x, index_matrix[i,], 'cosine')
+          # y <- y + para$coefs[i] * (prod(index_matrix[i,]))^(-1.6) * multi_psi(x, index_matrix[i,], 'cosine')
+          }
+        # y <- y + 3*(prod(index_matrix[i,]))^(-1.5) * multi_psi(max(x-0.5,0), index_matrix[i,], 'sobolev1')
+      }
   }else if(FUN == 'sinproduct'){
     y1 <- y2 <- 1
     for(i in 1:xdim){
@@ -441,7 +445,12 @@ truef <- function(x, FUN = 'linear', para = NULL){
       y2 <- y2 * cos(6*x[i])
     }
     y <- y1 + y2
-    }
+  }else if(FUN == 'linear_binary'){
+    xdim <- length(x)
+    y <- rbinom(1, 1, sum(x)/xdim)
+    rbinom(1, 1, 0.5)
+  }
+  
   
   return(y)
 }

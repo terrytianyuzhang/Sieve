@@ -9,6 +9,18 @@ psicos <- function(x, j) {
     .Call(`_Sieve_psicos`, x, j)
 }
 
+psisin <- function(x, j) {
+    .Call(`_Sieve_psisin`, x, j)
+}
+
+psipolytri <- function(x, j) {
+    .Call(`_Sieve_psipolytri`, x, j)
+}
+
+psipoly <- function(x, j) {
+    .Call(`_Sieve_psipoly`, x, j)
+}
+
 psi <- function(x, j, type) {
     .Call(`_Sieve_psi`, x, j, type)
 }

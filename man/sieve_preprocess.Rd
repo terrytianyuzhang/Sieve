@@ -52,7 +52,7 @@ Generate the design matrix for the downstream lasso-type penalized model fitting
 \examples{
 xdim <- 1 #1 dimensional feature
 #generate 1000 training samples
-TrainData <- Sieve:::GenTrain(s.size = 1000, xdim = xdim)
+TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
 #use 50 cosine basis functions
 type <- 'cosine'
 basisN <- 50 
@@ -63,7 +63,7 @@ sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)],
 \dontrun{
 xdim <- 5 #1 dimensional feature
 #generate 1000 training samples
-TrainData <- Sieve:::GenTrain(s.size = 1000, xdim = xdim, 
+TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim, 
                               frho = 'additive', frho.para = 2)
 #use 1000 basis functions
 #each of them is a product of univariate cosine functions.

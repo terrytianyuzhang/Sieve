@@ -32,10 +32,10 @@ xdim <- 5
 basisN <- 1000
 type <- 'cosine'
 
-TrainData <- Sieve:::GenTrain(s.size = 300, xdim = xdim, 
+TrainData <- Sieve:::GenSamples(s.size = 300, xdim = xdim, 
             frho = 'additive', frho.para = xdim/2)
 
-TestData <- Sieve:::GenTrain(s.size = 1e3, xdim = xdim, noise.para = 0, 
+TestData <- Sieve:::GenSamples(s.size = 1e3, xdim = xdim, noise.para = 0, 
             frho = 'additive', frho.para = xdim/2)
 
 sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 

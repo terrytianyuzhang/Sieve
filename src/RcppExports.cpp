@@ -35,6 +35,42 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// psisin
+double psisin(double x, int j);
+RcppExport SEXP _Sieve_psisin(SEXP xSEXP, SEXP jSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type j(jSEXP);
+    rcpp_result_gen = Rcpp::wrap(psisin(x, j));
+    return rcpp_result_gen;
+END_RCPP
+}
+// psipolytri
+double psipolytri(double x, int j);
+RcppExport SEXP _Sieve_psipolytri(SEXP xSEXP, SEXP jSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type j(jSEXP);
+    rcpp_result_gen = Rcpp::wrap(psipolytri(x, j));
+    return rcpp_result_gen;
+END_RCPP
+}
+// psipoly
+double psipoly(double x, int j);
+RcppExport SEXP _Sieve_psipoly(SEXP xSEXP, SEXP jSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type j(jSEXP);
+    rcpp_result_gen = Rcpp::wrap(psipoly(x, j));
+    return rcpp_result_gen;
+END_RCPP
+}
 // psi
 double psi(double x, int j, String type);
 RcppExport SEXP _Sieve_psi(SEXP xSEXP, SEXP jSEXP, SEXP typeSEXP) {
@@ -145,6 +181,9 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_Sieve_Generate_factors", (DL_FUNC) &_Sieve_Generate_factors, 2},
     {"_Sieve_psicos", (DL_FUNC) &_Sieve_psicos, 2},
+    {"_Sieve_psisin", (DL_FUNC) &_Sieve_psisin, 2},
+    {"_Sieve_psipolytri", (DL_FUNC) &_Sieve_psipolytri, 2},
+    {"_Sieve_psipoly", (DL_FUNC) &_Sieve_psipoly, 2},
     {"_Sieve_psi", (DL_FUNC) &_Sieve_psi, 3},
     {"_Sieve_multi_psi", (DL_FUNC) &_Sieve_multi_psi, 3},
     {"_Sieve_Kernel_M_C", (DL_FUNC) &_Sieve_Kernel_M_C, 3},
