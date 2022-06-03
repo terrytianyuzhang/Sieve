@@ -1,4 +1,5 @@
 # Sieve
+
 R package, Sieve. Perform nonparametric estimation by the method of sieves (generalized Fourier series).
 
 The current version can solve regression and classification problems. I will make it able to handle time-to-event outcomes very soon.
@@ -12,3 +13,5 @@ The time and space expense both scale linearly in sample size and the number of 
 Adaptive to the number of features/predictors truly associated with the outcome. Can achieve the information lower bounds (minimax rate) of estimation in many cases.
 
 What we are doing: generating basis functions (something like multivariate Fourier basis), put everything in a LASSO solver (thank you glmnet!). That's it. 
+
+(Question, suggestion, collaboration: shoot me an email: zty@uw.edu, Tianyu Zhang. Department of Biostatistics, University of Washington,)
