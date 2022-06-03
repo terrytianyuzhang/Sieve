@@ -14,4 +14,4 @@ Adaptive to the number of features/predictors truly associated with the outcome.
 
 What we are doing: generating basis functions (something like multivariate Fourier basis), put everything in a LASSO solver (thank you glmnet!). That's it. 
 
-(Question, suggestion, collaboration: shoot me an email: zty@uw.edu, Tianyu Zhang. Department of Biostatistics, University of Washington,)
+(Questions, suggestion, collaboration: shoot me an email: zty@uw.edu, Tianyu Zhang. Department of Biostatistics, University of Washington)
