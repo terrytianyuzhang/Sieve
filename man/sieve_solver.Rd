@@ -18,7 +18,7 @@ sieve_solver(
 
 \item{Y}{a vector. The outcome variable. The length of Y equals to the training sample size, which should also match the row number of X in model.}
 
-\item{l1}{a logical variable. TRUE means calculating the coefficients by sovling a l1-penalized empirical risk minimization problem. FALSE means solving a least-square problem. We recommend use the default TRUE for better performance and numerical stability.}
+\item{l1}{a logical variable. TRUE means calculating the coefficients by sovling a l1-penalized empirical risk minimization problem. FALSE means solving a least-square problem. Default is TRUE.}
 
 \item{family}{a string. 'gaussian', mean-squared-error regression problem.}
 
@@ -40,4 +40,21 @@ a list. In addition to the preprocessing information, it also has the fitted val
 }
 \description{
 This is the main function that performs sieve estimation. It calculate the coefficients by solving a penalized lasso type problem.
+}
+\examples{
+xdim <- 1 #1 dimensional feature
+#generate 1000 training samples
+TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+#use 50 cosine basis functions
+type <- 'cosine'
+basisN <- 50 
+sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+                                basisN = basisN, type = type)
+sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y)
+\dontrun{
+###if the outcome is binary, 
+###need to solve a nonparametric logistic regression problem
+sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y,
+                         family = 'binomial')
+}
 }

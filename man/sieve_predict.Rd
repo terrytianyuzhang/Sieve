@@ -17,7 +17,34 @@ sieve_predict(model, testX, testY = NULL)
 a list. 
 \item{predictY}{a matrix. Dimension is test sample size (# of rows) x number of penalty hyperparameter lambda (# of columns). 
 For regression problem, that is, when family = "gaussian", each entry is the estimated conditional mean (or predictor of outcome Y). For classification problems (family = "binomial"), each entry is the predicted probability of having Y = 1 (which class is defined as "class 1" depends on the training data labeling). }
+\item{MSE}{For regression problem, when testY is provided, the algorithm also calculates the mean-sqaured errors using testing data. Each entry of \code{MSE} correponds to one value of penalization hyperparameter \code{lambda}}
 }
 \description{
 Use the fitted sieve regression model from sieve_solver. It also returns the testing mean-squared errors.
+}
+\examples{
+xdim <- 1 #1 dimensional feature
+#generate 1000 training samples
+TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+#use 50 cosine basis functions
+type <- 'cosine'
+basisN <- 50 
+sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+                                basisN = basisN, type = type)
+sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y)
+#generate 1000 testing samples
+TestData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+sieve.prediction <- sieve_predict(model = sieve.fit, 
+                                  testX = TestData[,2:(xdim+1)], 
+                                  testY = TestData$Y)
+\dontrun{
+###if the outcome is binary, 
+###need to solve a nonparametric logistic regression problem
+sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y,
+                         family = 'binomial')
+###the predicted value is conditional probability.
+sieve.prediction <- sieve_predict(model = sieve.fit, 
+                                  testX = TestData[,2:(xdim+1)], 
+                                  testY = TestData$Y)
+}
 }

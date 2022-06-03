@@ -53,7 +53,7 @@
 #'                                 basisN = basisN, type = type, 
 #'                                 interaction_order = 1)
 #' #sieve.model$index_matrix #for each row, there is at most one entry >= 2. 
-#' #this means there are no basis functions varying in more than 2-dimensions are used
+#' #this means there are no basis functions varying in more than 2-dimensions 
 #' #that is, we are fitting additive models without interaction between features.
 #' }
 #' @export
@@ -108,7 +108,7 @@ sieve_preprocess <- function(X, basisN = NULL, maxj = NULL,
 #' 
 #' @param model a list. Typically, it is the output of Sieve::sieve_preprocess.
 #' @param Y a vector. The outcome variable. The length of Y equals to the training sample size, which should also match the row number of X in model.
-#' @param l1 a logical variable. TRUE means calculating the coefficients by sovling a l1-penalized empirical risk minimization problem. FALSE means solving a least-square problem. We recommend use the default TRUE for better performance and numerical stability.
+#' @param l1 a logical variable. TRUE means calculating the coefficients by sovling a l1-penalized empirical risk minimization problem. FALSE means solving a least-square problem. Default is TRUE.
 #' @param family a string. 'gaussian', mean-squared-error regression problem.
 #' @param lambda same as the lambda of glmnet::glmnet.
 #' @param nlambda a number. Number of penalization hyperparameter used when solving the lasso-type problem. Default is 100.
@@ -123,6 +123,22 @@ sieve_preprocess <- function(X, basisN = NULL, maxj = NULL,
 #' \item{norm_para}{a matrix. It records how each dimension of the feature/predictor is rescaled, which is useful when rescaling the testing sample's predictors.}
 #' \item{lambda}{a vector. It records the penalization hyperparameter used when solving the lasso problems. Default has a length of 100, meaning the algorithm tried 100 different penalization hyperparameters.}
 #' \item{family}{a string. 'gaussian', continuous numerical outcome, regression probelm; 'binomial', binary outcome, classification problem.}
+#' @examples 
+#' xdim <- 1 #1 dimensional feature
+#' #generate 1000 training samples
+#' TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+#' #use 50 cosine basis functions
+#' type <- 'cosine'
+#' basisN <- 50 
+#' sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+#'                                 basisN = basisN, type = type)
+#' sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y)
+#' \dontrun{
+#' ###if the outcome is binary, 
+#' ###need to solve a nonparametric logistic regression problem
+#' sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y,
+#'                          family = 'binomial')
+#' }
 #' @export
 #'
 sieve_solver <- function(model, Y, l1 = TRUE, family = "gaussian", 
@@ -266,7 +282,32 @@ normalize_X <- function(X, norm_para  = NULL, lower_q = 0.025, upper_q = 0.975){
 #' @return a list. 
 #' \item{predictY}{a matrix. Dimension is test sample size (# of rows) x number of penalty hyperparameter lambda (# of columns). 
 #' For regression problem, that is, when family = "gaussian", each entry is the estimated conditional mean (or predictor of outcome Y). For classification problems (family = "binomial"), each entry is the predicted probability of having Y = 1 (which class is defined as "class 1" depends on the training data labeling). }
-
+#' \item{MSE}{For regression problem, when testY is provided, the algorithm also calculates the mean-sqaured errors using testing data. Each entry of \code{MSE} correponds to one value of penalization hyperparameter \code{lambda}}
+#' @examples 
+#' xdim <- 1 #1 dimensional feature
+#' #generate 1000 training samples
+#' TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+#' #use 50 cosine basis functions
+#' type <- 'cosine'
+#' basisN <- 50 
+#' sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+#'                                 basisN = basisN, type = type)
+#' sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y)
+#' #generate 1000 testing samples
+#' TestData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+#' sieve.prediction <- sieve_predict(model = sieve.fit, 
+#'                                   testX = TestData[,2:(xdim+1)], 
+#'                                   testY = TestData$Y)
+#' \dontrun{
+#' ###if the outcome is binary, 
+#' ###need to solve a nonparametric logistic regression problem
+#' sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y,
+#'                          family = 'binomial')
+#' ###the predicted value is conditional probability.
+#' sieve.prediction <- sieve_predict(model = sieve.fit, 
+#'                                   testX = TestData[,2:(xdim+1)], 
+#'                                   testY = TestData$Y)
+#' }
 #' @export
 #'
 sieve_predict <- function(model, testX, testY = NULL){
@@ -468,7 +509,8 @@ truef <- function(x, FUN = 'linear', para = NULL){
     y <- rbinom(1, 1, sum(x)/xdim)
   }else if(FUN == 'nonlinear_binary'){
     xdim <- length(x)
-    y <- rbinom(1, 1, sum(abs(x-0.5))/xdim+0.2)
+    # y <- rbinom(1, 1, sum(abs(x-0.5))/xdim+0.2)
+    y <- rbinom(1,1, as.numeric(x[1] < 0.5))
   }
   
   

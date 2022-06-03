@@ -79,7 +79,7 @@ sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)],
                                 basisN = basisN, type = type, 
                                 interaction_order = 1)
 #sieve.model$index_matrix #for each row, there is at most one entry >= 2. 
-#this means there are no basis functions varying in more than 2-dimensions are used
+#this means there are no basis functions varying in more than 2-dimensions 
 #that is, we are fitting additive models without interaction between features.
 }
 }
