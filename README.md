@@ -5,8 +5,10 @@ The current version can solve regression and classification problems. I will mak
 
 I am planning to add some visulization functions for feature selection.
 
-##Computationally tractable: the time and space expense both scale linearly in sample size and the number of basis functions specified by the users. Can directly handle 10k x 100 (sample size x dimension of features) data science problems.
+## Computationally tractable: 
+The time and space expense both scale linearly in sample size and the number of basis functions specified by the users. Can directly handle 10k x 100 (sample size x dimension of features) data science problems.
 
-##Theoretically guaranteed: adaptive to the number of features/predictors truly associated with the outcome. Can achieve the information lower bounds (minimax rate) of estimation in many cases.
+## Theoretically guaranteed: 
+Adaptive to the number of features/predictors truly associated with the outcome. Can achieve the information lower bounds (minimax rate) of estimation in many cases.
 
 What we are doing: generating basis functions (something like multivariate Fourier basis), put everything in a LASSO solver (thank you glmnet!). That's it. 
