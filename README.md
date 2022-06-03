@@ -12,6 +12,8 @@ The time and space expense both scale linearly in sample size and the number of 
 ## Theoretically guaranteed: 
 Adaptive to the number of features/predictors truly associated with the outcome. Can achieve the information lower bounds (minimax rate) of estimation in many cases.
 
-What we are doing: generating basis functions (something like multivariate Fourier basis), put everything in a LASSO solver (thank you glmnet!). That's it. 
+## What is sieve estimation? 
+
+Generating basis functions (something like multivariate Fourier basis), put everything in a LASSO solver (thank you glmnet!). That's it. 
 
 (Questions, suggestion, collaboration: shoot me an email: zty@uw.edu, Tianyu Zhang. Department of Biostatistics, University of Washington)
