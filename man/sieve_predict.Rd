@@ -14,7 +14,9 @@ sieve_predict(model, testX, testY = NULL)
 \item{testY}{a vector. The outcome of testing samples (if known). Default is NULL. For regression problems, the algorithm also returns the testing mean-squared errors.}
 }
 \value{
-A vector of n colour hex codes
+a list. 
+\item{predictY}{a matrix. Dimension is test sample size (# of rows) x number of penalty hyperparameter lambda (# of columns). 
+For regression problem, that is, when family = "gaussian", each entry is the estimated conditional mean (or predictor of outcome Y). For classification problems (family = "binomial"), each entry is the predicted probability of having Y = 1 (which class is defined as "class 1" depends on the training data labeling). }
 }
 \description{
 Use the fitted sieve regression model from sieve_solver. It also returns the testing mean-squared errors.

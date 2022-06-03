@@ -4,6 +4,6 @@ export(sieve_preprocess)
 export(sieve_solver)
 export(sieve_predict)
 #' @importFrom combinat permn
-importFrom("stats", "coef", "quantile", "rnorm", "runif")
+importFrom("stats", "coef", "quantile", "rnorm", "runif", "rbinom")
 importFrom("glmnet", "glmnet")
 importFrom("utils", "combn")

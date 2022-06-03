@@ -116,15 +116,16 @@ sieve_preprocess <- function(X, basisN = NULL, maxj = NULL,
 #' @return a list. In addition to the preprocessing information, it also has the fitted value.
 #' \item{Phi}{a matrix. This is the design matrix directly used by the next step model fitting. The (i,j)-th element of this matrix is the evaluation of i-th sample's feature at the j-th basis function. The dimension of this matrix is sample size x basisN.}
 #' \item{X}{a matrix. This is the rescaled original feature/predictor matrix. }
+#' \item{beta_hat}{a matrix. Dimension is basisN x nlambda. The j-th column corresponds to the fitted regression coeffcients using the j-th hyperparameter in lambda.}
 #' \item{type}{a string. The type of basis funtion.}
 #' \item{index_matrix}{a matrix. It specifies what are the product basis functions used when constructing the design matrix Phi. It has a dimension basisN x dimension of original features. There are at most interaction_order many non-1 elements in each row.}
 #' \item{basisN}{a number. Number of sieve basis functions.}
 #' \item{norm_para}{a matrix. It records how each dimension of the feature/predictor is rescaled, which is useful when rescaling the testing sample's predictors.}
 #' \item{lambda}{a vector. It records the penalization hyperparameter used when solving the lasso problems. Default has a length of 100, meaning the algorithm tried 100 different penalization hyperparameters.}
-#' \item{beta_hat}{a matrix. Dimension is basisN x nlambda. The j-th column corresponds to the fitted regression coeffcients using the j-th hyperparameter in lambda.}
+#' \item{family}{a string. 'gaussian', continuous numerical outcome, regression probelm; 'binomial', binary outcome, classification problem.}
 #' @export
 #'
-sieve_solver <- function(model, Y, l1 = TRUE, family = 'gaussian', 
+sieve_solver <- function(model, Y, l1 = TRUE, family = "gaussian", 
                          lambda = NULL, nlambda = 100){
   if(l1 == FALSE){
     ## this is least square sieve estimator
@@ -138,10 +139,11 @@ sieve_solver <- function(model, Y, l1 = TRUE, family = 'gaussian',
     #need to allow it
     mo <- glmnet::glmnet(model$Phi[,-1], Y, family = family, alpha = 1, 
                          nlambda = nlambda, intercept = T, standardize = FALSE,
-                         lambda = lambda
-    ) 
+                         lambda = lambda)
+    
     model$lambda <- mo$lambda
     model$beta_hat <- coef(mo)
+    model$family <- family
     
     return(model)
   }
@@ -261,7 +263,10 @@ normalize_X <- function(X, norm_para  = NULL, lower_q = 0.025, upper_q = 0.975){
 #' @param testX a data frame. Dimension equals to test sample size x feature diemnsion. Should be of a similar format as the training feature provided to sieve_preprocess.
 #' @param testY a vector. The outcome of testing samples (if known). Default is NULL. For regression problems, the algorithm also returns the testing mean-squared errors.
 #'
-#' @return A vector of n colour hex codes
+#' @return a list. 
+#' \item{predictY}{a matrix. Dimension is test sample size (# of rows) x number of penalty hyperparameter lambda (# of columns). 
+#' For regression problem, that is, when family = "gaussian", each entry is the estimated conditional mean (or predictor of outcome Y). For classification problems (family = "binomial"), each entry is the predicted probability of having Y = 1 (which class is defined as "class 1" depends on the training data labeling). }
+
 #' @export
 #'
 sieve_predict <- function(model, testX, testY = NULL){
@@ -278,6 +283,7 @@ sieve_predict <- function(model, testX, testY = NULL){
   basisN <- model$basisN
   index_matrix <- model$index_matrix
   norm_para <- model$norm_para #specifies how to normalize the testing features/predictors.
+  family <- model$family
   
   if(class(testX) == 'numeric' | class(testX) == 'factor'){
     test.size <- length(testX)
@@ -297,19 +303,31 @@ sieve_predict <- function(model, testX, testY = NULL){
 
   predictY <- matrix(0, nrow = test.size, ncol = lambda_num)
   test_Phi <- test_list$Phi
-  if(!is.null(testY)){
-    MSE <- rep(0, lambda_num)
+  
+  if(family == 'gaussian'){
+    #predictY is the estimated conditional mean
+    if(!is.null(testY)){
+      MSE <- rep(0, lambda_num)
+      for(i in 1:lambda_num){
+        predictY[,i] <- crossprod_C(test_Phi, matrix(beta_hat[,i]))
+        MSE[i] <- mean((predictY[,i] - testY)^2)
+      }
+      return(list(predictY = predictY, MSE = MSE))
+    }else{
+      for(i in 1:lambda_num){
+        predictY[,i] <- crossprod_C(test_Phi, matrix(beta_hat[,i]))
+      }
+      return(list(predictY = predictY))
+    }
+  }else if(family == 'binomial'){
+    #we first calculate the log odss function, then transform it back to probability
     for(i in 1:lambda_num){
       predictY[,i] <- crossprod_C(test_Phi, matrix(beta_hat[,i]))
-      MSE[i] <- mean((predictY[,i] - testY)^2)
     }
-    return(list(predictY = predictY, MSE = MSE))
-  }else{
-    for(i in 1:lambda_num){
-      predictY[,i] <- crossprod_C(test_Phi, matrix(beta_hat[,i]))
-    }
+    predictY <- exp(predictY)/(1 + exp(predictY))
     return(list(predictY = predictY))
   }
+  
 }
 
 
@@ -448,7 +466,9 @@ truef <- function(x, FUN = 'linear', para = NULL){
   }else if(FUN == 'linear_binary'){
     xdim <- length(x)
     y <- rbinom(1, 1, sum(x)/xdim)
-    rbinom(1, 1, 0.5)
+  }else if(FUN == 'nonlinear_binary'){
+    xdim <- length(x)
+    y <- rbinom(1, 1, sum(abs(x-0.5))/xdim+0.2)
   }
   
   

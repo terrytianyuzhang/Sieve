@@ -30,12 +30,13 @@ sieve_solver(
 a list. In addition to the preprocessing information, it also has the fitted value.
 \item{Phi}{a matrix. This is the design matrix directly used by the next step model fitting. The (i,j)-th element of this matrix is the evaluation of i-th sample's feature at the j-th basis function. The dimension of this matrix is sample size x basisN.}
 \item{X}{a matrix. This is the rescaled original feature/predictor matrix. }
+\item{beta_hat}{a matrix. Dimension is basisN x nlambda. The j-th column corresponds to the fitted regression coeffcients using the j-th hyperparameter in lambda.}
 \item{type}{a string. The type of basis funtion.}
 \item{index_matrix}{a matrix. It specifies what are the product basis functions used when constructing the design matrix Phi. It has a dimension basisN x dimension of original features. There are at most interaction_order many non-1 elements in each row.}
 \item{basisN}{a number. Number of sieve basis functions.}
 \item{norm_para}{a matrix. It records how each dimension of the feature/predictor is rescaled, which is useful when rescaling the testing sample's predictors.}
 \item{lambda}{a vector. It records the penalization hyperparameter used when solving the lasso problems. Default has a length of 100, meaning the algorithm tried 100 different penalization hyperparameters.}
-\item{beta_hat}{a matrix. Dimension is basisN x nlambda. The j-th column corresponds to the fitted regression coeffcients using the j-th hyperparameter in lambda.}
+\item{family}{a string. 'gaussian', continuous numerical outcome, regression probelm; 'binomial', binary outcome, classification problem.}
 }
 \description{
 This is the main function that performs sieve estimation. It calculate the coefficients by solving a penalized lasso type problem.
