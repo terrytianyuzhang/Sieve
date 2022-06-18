@@ -70,7 +70,7 @@ sieve_preprocess <- function(X, basisN = NULL, maxj = NULL,
     stop('need to provide a larger basisN, you can start with xdim*5')
   }
   
-  if(class(X) == 'numeric' | class(X) == 'factor' ){
+  if(is(X,'numeric') | is(X, 'factor')){
     s.size <- length(X) #this is a univariate regression problem, sometimes the input data.frame is automatically conveted to an array
   }
   else{
@@ -326,7 +326,7 @@ sieve_predict <- function(model, testX, testY = NULL){
   norm_para <- model$norm_para #specifies how to normalize the testing features/predictors.
   family <- model$family
   
-  if(class(testX) == 'numeric' | class(testX) == 'factor'){
+  if(is(testX, 'numeric') | is(testX, 'factor')){
     test.size <- length(testX)
     xdim <- 1
   }else{
