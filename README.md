@@ -2,7 +2,9 @@
 
 References:https://arxiv.org/abs/2206.02994
 
-R package, Sieve. Perform nonparametric estimation by the method of sieves (estimation using multivariate orthogonal series). This type of estimators have been actively studied and applied in univariate feature settings, but in multivariate case it hasn't received its deserved attention. 
+R package, Sieve. Perform nonparametric estimation by the method of sieves (estimation using multivariate orthogonal series). This type of estimators has been actively studied and applied in univariate feature settings, but in multivariate cases it hasn't received its deserved attention. 
+
+Installing a package from GitHub can be tricky. But I found 80% of the errors can be solved by restarting RStudio.
 
 The current version can solve regression and classification problems. The algorithm gives the estimated condition mean (regression) and estimated conditional probability functions (classification). I will make it able to handle time-to-event outcomes very soon.
 
