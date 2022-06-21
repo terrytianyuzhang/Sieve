@@ -11,7 +11,7 @@ sieve_preprocess(
   type = "cosine",
   interaction_order = 3,
   index_matrix = NULL,
-  norm_feature = T,
+  norm_feature = TRUE,
   norm_para = NULL
 )
 }
@@ -52,7 +52,7 @@ Generate the design matrix for the downstream lasso-type penalized model fitting
 \examples{
 xdim <- 1 #1 dimensional feature
 #generate 1000 training samples
-TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+TrainData <- GenSamples(s.size = 1000, xdim = xdim)
 #use 50 cosine basis functions
 type <- 'cosine'
 basisN <- 50 
@@ -60,14 +60,14 @@ sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)],
                                 basisN = basisN, type = type)
 #sieve.model$Phi #Phi is the design matrix
 
-\dontrun{
 xdim <- 5 #1 dimensional feature
 #generate 1000 training samples
-TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim, 
+#only the first two dimensions are truly associated with the outcome
+TrainData <- GenSamples(s.size = 1000, xdim = xdim, 
                               frho = 'additive', frho.para = 2)
+                              
 #use 1000 basis functions
 #each of them is a product of univariate cosine functions.
-
 type <- 'cosine'
 basisN <- 1000 
 sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
@@ -81,5 +81,4 @@ sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)],
 #sieve.model$index_matrix #for each row, there is at most one entry >= 2. 
 #this means there are no basis functions varying in more than 2-dimensions 
 #that is, we are fitting additive models without interaction between features.
-}
 }

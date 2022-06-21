@@ -25,7 +25,7 @@ Use the fitted sieve regression model from sieve_solver. It also returns the tes
 \examples{
 xdim <- 1 #1 dimensional feature
 #generate 1000 training samples
-TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+TrainData <- GenSamples(s.size = 1000, xdim = xdim)
 #use 50 cosine basis functions
 type <- 'cosine'
 basisN <- 50 
@@ -33,18 +33,21 @@ sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)],
                                 basisN = basisN, type = type)
 sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y)
 #generate 1000 testing samples
-TestData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+TestData <- GenSamples(s.size = 1000, xdim = xdim)
 sieve.prediction <- sieve_predict(model = sieve.fit, 
                                   testX = TestData[,2:(xdim+1)], 
                                   testY = TestData$Y)
-\dontrun{
 ###if the outcome is binary, 
 ###need to solve a nonparametric logistic regression problem
+xdim <- 1
+TrainData <- GenSamples(s.size = 1e3, xdim = xdim, y.type = 'binary', frho = 'nonlinear_binary')
+sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+                                basisN = basisN, type = type)
 sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y,
                          family = 'binomial')
-###the predicted value is conditional probability.
+                         
+###the predicted value is conditional probability (of taking class 1).
+TrainData <- GenSamples(s.size = 1e3, xdim = xdim, y.type = 'binary', frho = 'nonlinear_binary')
 sieve.prediction <- sieve_predict(model = sieve.fit, 
-                                  testX = TestData[,2:(xdim+1)], 
-                                  testY = TestData$Y)
-}
+                                  testX = TestData[,2:(xdim+1)])
 }

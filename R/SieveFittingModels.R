@@ -26,7 +26,7 @@
 #' @examples 
 #' xdim <- 1 #1 dimensional feature
 #' #generate 1000 training samples
-#' TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+#' TrainData <- GenSamples(s.size = 1000, xdim = xdim)
 #' #use 50 cosine basis functions
 #' type <- 'cosine'
 #' basisN <- 50 
@@ -34,14 +34,14 @@
 #'                                 basisN = basisN, type = type)
 #' #sieve.model$Phi #Phi is the design matrix
 #' 
-#' \dontrun{
 #' xdim <- 5 #1 dimensional feature
 #' #generate 1000 training samples
-#' TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim, 
+#' #only the first two dimensions are truly associated with the outcome
+#' TrainData <- GenSamples(s.size = 1000, xdim = xdim, 
 #'                               frho = 'additive', frho.para = 2)
+#'                               
 #' #use 1000 basis functions
 #' #each of them is a product of univariate cosine functions.
-#' 
 #' type <- 'cosine'
 #' basisN <- 1000 
 #' sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
@@ -55,19 +55,19 @@
 #' #sieve.model$index_matrix #for each row, there is at most one entry >= 2. 
 #' #this means there are no basis functions varying in more than 2-dimensions 
 #' #that is, we are fitting additive models without interaction between features.
-#' }
 #' @export
 #'
 sieve_preprocess <- function(X, basisN = NULL, maxj = NULL, 
                              type = 'cosine', 
                              interaction_order = 3, index_matrix = NULL,
-                             norm_feature = T, norm_para = NULL){
+                             norm_feature = TRUE, norm_para = NULL){
   
   if(is.null(basisN)){
-    warning('user did not specify number of basis functions to use, default is xdim*5')
+    warning('user did not specify number of basis functions to use, default is xdim*50')
+    warning('a theoretically good number of basis functions should be around (sample size)^(1/3)*(feature dimension)^3')
     basisN <- NCOL(X)*50
   } else if(basisN == 1){
-    stop('need to provide a larger basisN, you can start with xdim*5')
+    stop('need to provide a larger basisN, you can start with xdim*50')
   }
   
   if(is(X,'numeric') | is(X, 'factor')){
@@ -126,19 +126,22 @@ sieve_preprocess <- function(X, basisN = NULL, maxj = NULL,
 #' @examples 
 #' xdim <- 1 #1 dimensional feature
 #' #generate 1000 training samples
-#' TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+#' TrainData <- GenSamples(s.size = 1000, xdim = xdim)
 #' #use 50 cosine basis functions
 #' type <- 'cosine'
 #' basisN <- 50 
 #' sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
 #'                                 basisN = basisN, type = type)
 #' sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y)
-#' \dontrun{
+#' 
 #' ###if the outcome is binary, 
 #' ###need to solve a nonparametric logistic regression problem
+#' xdim <- 1
+#' TrainData <- GenSamples(s.size = 1e3, xdim = xdim, y.type = 'binary', frho = 'nonlinear_binary')
+#' sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+#'                                 basisN = basisN, type = type)
 #' sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y,
 #'                          family = 'binomial')
-#' }
 #' @export
 #'
 sieve_solver <- function(model, Y, l1 = TRUE, family = "gaussian", 
@@ -154,7 +157,7 @@ sieve_solver <- function(model, Y, l1 = TRUE, family = "gaussian",
     #remove the intercept column in the design matrix
     #need to allow it
     mo <- glmnet::glmnet(model$Phi[,-1], Y, family = family, alpha = 1, 
-                         nlambda = nlambda, intercept = T, standardize = FALSE,
+                         nlambda = nlambda, intercept = TRUE, standardize = FALSE,
                          lambda = lambda)
     
     model$lambda <- mo$lambda
@@ -286,7 +289,7 @@ normalize_X <- function(X, norm_para  = NULL, lower_q = 0.025, upper_q = 0.975){
 #' @examples 
 #' xdim <- 1 #1 dimensional feature
 #' #generate 1000 training samples
-#' TrainData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+#' TrainData <- GenSamples(s.size = 1000, xdim = xdim)
 #' #use 50 cosine basis functions
 #' type <- 'cosine'
 #' basisN <- 50 
@@ -294,20 +297,23 @@ normalize_X <- function(X, norm_para  = NULL, lower_q = 0.025, upper_q = 0.975){
 #'                                 basisN = basisN, type = type)
 #' sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y)
 #' #generate 1000 testing samples
-#' TestData <- Sieve:::GenSamples(s.size = 1000, xdim = xdim)
+#' TestData <- GenSamples(s.size = 1000, xdim = xdim)
 #' sieve.prediction <- sieve_predict(model = sieve.fit, 
 #'                                   testX = TestData[,2:(xdim+1)], 
 #'                                   testY = TestData$Y)
-#' \dontrun{
 #' ###if the outcome is binary, 
 #' ###need to solve a nonparametric logistic regression problem
+#' xdim <- 1
+#' TrainData <- GenSamples(s.size = 1e3, xdim = xdim, y.type = 'binary', frho = 'nonlinear_binary')
+#' sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
+#'                                 basisN = basisN, type = type)
 #' sieve.fit<- sieve_solver(model = sieve.model, Y = TrainData$Y,
 #'                          family = 'binomial')
-#' ###the predicted value is conditional probability.
+#'                          
+#' ###the predicted value is conditional probability (of taking class 1).
+#' TrainData <- GenSamples(s.size = 1e3, xdim = xdim, y.type = 'binary', frho = 'nonlinear_binary')
 #' sieve.prediction <- sieve_predict(model = sieve.fit, 
-#'                                   testX = TestData[,2:(xdim+1)], 
-#'                                   testY = TestData$Y)
-#' }
+#'                                   testX = TestData[,2:(xdim+1)])
 #' @export
 #'
 sieve_predict <- function(model, testX, testY = NULL){
@@ -371,6 +377,29 @@ sieve_predict <- function(model, testX, testY = NULL){
   
 }
 
+#' Generate some simulation/testing samples with nonlinear truth.
+#'
+#' This function is used in several examples in the package.
+#' 
+#' @param s.size a number. Sample size.
+#' @param xdim a number. Dimension of the feature vectors X.
+#' @param x.dis a string. It specifies the distribution of feature X. The default is uniform distribution over \code{xdim}-dimensional unit cube.
+#' @param x.para extra parameter to specify the feature distribution.
+#' @param frho a string. It specifies the true regression/log odds functions used to generate the data set. The default is a linear function. 
+#' @param frho.para extra parameter to specify the true underlying regression/log odds function.
+#' @param y.type a string. Default is \code{y.type = 'continuous'}, meaning the outcome is numerical and the problem is regression. Set it to \code{y.type = 'binary'} for binary outcome.
+#' @param noise.dis a string. For the distribution of the noise variable (under regression probelm settings). Default is Gaussian distribution.
+#' @param noise.para a number. It specifies the magnitude of the noise in regression settings.
+#' 
+#' @return a \code{data.frame}. The variable \code{Y} is the outcome (either continuous or binary). Each of the rest of the variables corresponds to one dimension of the feature vector.
+#' @examples 
+#' xdim <- 1 #1 dimensional feature
+#' #generate 1000 training samples
+#' TrainData <- GenSamples(s.size = 1000, xdim = xdim)
+#' #generate some noise-free testing samples
+#' TestData <- GenSamples(s.size = 1000, xdim = xdim, noise.para = 0)
+#' @export
+#'
 
 GenSamples <- function(s.size, xdim = 1, x.dis = "uniform",
                      x.para = NULL, frho = 'linear', frho.para = 1e2,
@@ -509,8 +538,8 @@ truef <- function(x, FUN = 'linear', para = NULL){
     y <- rbinom(1, 1, sum(x)/xdim)
   }else if(FUN == 'nonlinear_binary'){
     xdim <- length(x)
-    # y <- rbinom(1, 1, sum(abs(x-0.5))/xdim+0.2)
-    y <- rbinom(1,1, as.numeric(x[1] < 0.5))
+    y <- rbinom(1, 1, sum(abs(x-0.5))/xdim+0.2)
+    # y <- rbinom(1,1, as.numeric(x[1] < 0.5))
   }
   
   
@@ -777,7 +806,7 @@ sieve.predict <- function(testX, testY, model){
 all_add_one <- function(index){
   index <- as.matrix(index)
   xdim <- length(index)
-  added <- matrix(rep(index, xdim), ncol = xdim, byrow = T)
+  added <- matrix(rep(index, xdim), ncol = xdim, byrow = TRUE)
   for(i in 1:xdim){
     added[i,i] <- added[i,i] + 1
   }

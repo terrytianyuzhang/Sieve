@@ -5,10 +5,11 @@ Version: 1.0
 Date: 2022-05-27
 Author: Tianyu Zhang
 Maintainer: Tianyu Zhang <zty@uw.edu>
-Description: This is package performs nonparametric regression or estimation of conditional mean functions by the method of sieves. The method is suitable for problems with multivariate or moderate high-dimensional features. The main estimator in this package, penalized sieve estimator, is adaptive to the feature dimension with provable theoretical guarantees. Moreover, such a method is computationally tractable in the sense it typically has a polynomial dependence (rather than an exponential one) on the feature dimension.
+Description: Performs multivariate nonparametric regression/classification by the method of sieves (or using orthogonal series). The method is suitable for continuous/binary problems with multivariate or moderate high-dimensional features (dimension < 100). The main estimator in this package, penalized sieve estimator, is adaptive to the feature dimension with provable theoretical guarantees. Moreover, such a method is computationally tractable in the sense it typically has a polynomial dependence (rather than an exponential one) on the feature dimension and an almost linear dependence on the sample size. Details of the methods and model assumptions can be found in: Tianyu Zhang, and Noah Simon (2022) <arXiv:2206.02994>.
 License: GPL-2
 Imports: Rcpp (>= 1.0.7),
 	 combinat,
-	 glmnet
+	 glmnet,
+	 methods
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.1.1

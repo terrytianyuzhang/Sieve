@@ -23,19 +23,21 @@ The DESCRIPTION file:
 Maintainer: \packageMaintainer{Sieve}
 }
 \references{
-~~ Literature or other references for background information ~~
+Tianyu Zhang and Noah Simon (2022) <arXiv:2206.02994>
 }
-\keyword{sieve estimation}
+\keyword{sieve estimation; estimation using orthogonal series}
 \examples{
 
 xdim <- 5
 basisN <- 1000
 type <- 'cosine'
 
-TrainData <- Sieve:::GenSamples(s.size = 300, xdim = xdim, 
+#non-linear additive truth. Half of the features are truly associated with the outcome
+TrainData <- GenSamples(s.size = 300, xdim = xdim, 
             frho = 'additive', frho.para = xdim/2)
 
-TestData <- Sieve:::GenSamples(s.size = 1e3, xdim = xdim, noise.para = 0, 
+#noise-free testing samples
+TestData <- GenSamples(s.size = 1e3, xdim = xdim, noise.para = 0, 
             frho = 'additive', frho.para = xdim/2)
 
 sieve.model <- sieve_preprocess(X = TrainData[,2:(xdim+1)], 
