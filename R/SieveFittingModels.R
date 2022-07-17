@@ -247,7 +247,7 @@ create_index_matrix <- function(xdim, basisN = NULL, maxj = NULL, interaction_or
   return(index_matrix)
 }
 
-normalize_X <- function(X, norm_para  = NULL, lower_q = 0.025, upper_q = 0.975){
+normalize_X <- function(X, norm_para  = NULL, lower_q = 0.01, upper_q = 0.99){
   #normalize the support of covariate so that they are between 0,1.
   #
   
