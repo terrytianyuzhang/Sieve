@@ -10,6 +10,7 @@ License: GPL-2
 Imports: Rcpp (>= 1.0.7),
 	 combinat,
 	 glmnet,
-	 methods
+	 methods,
+	 MASS
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.1.1

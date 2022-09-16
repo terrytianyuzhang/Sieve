@@ -408,6 +408,52 @@ GenSamples <- function(s.size, xdim = 1, x.dis = "uniform",
   
   if(x.dis == 'uniform'){
     x <- matrix(runif(s.size * xdim, min = 0, max = 1), ncol = xdim)
+  }else if(x.dis == 'block_diag'){
+    
+    ###read in the distribution parameters
+    x.mean <- x.para[[1]]
+    x.var <- x.para[[2]] #marginal variance
+    x.cov <- x.para[[3]] #covariance between features in the block
+    x.block.size <- x.para[[4]] #block size
+    x.block.num <- floor(xdim/x.block.size) #block number
+    
+    print(x.block.num)
+    if(xdim != x.block.size * x.block.num){
+      warning('x overall dimension cannot be divided by block size')
+    }
+    
+    #covariance matrix within the block
+    Sigma <- matrix(x.cov, 
+                    nrow = x.block.size, 
+                    ncol = x.block.size)
+    diag(Sigma) <- rep(x.var, x.block.size)
+    
+    #generate covariates
+    x <- matrix(0, nrow = s.size, ncol = x.block.size*x.block.num)
+    for(i in 1:x.block.num){
+      tempx <- mvrnorm(n = s.size, mu = rep(x.mean, x.block.size),
+                       Sigma = Sigma)
+      x[,((i-1)*x.block.size + 1): (i*x.block.size)] <- tempx
+    }
+  }else if(x.dis == 'block_diag_overlap'){
+    ##this is an adversarial example, one redundant feature is associated with two causal features
+    feature_noise <- x.para[[1]]
+    
+    x1 <- rnorm(s.size, mean = 0, sd = 1)
+    x3 <- rnorm(s.size, mean = 0, sd = 1)
+    x2 <- 0.5*x1 + 2*x3 + rnorm(s.size, mean = 0, sd = feature_noise)
+    # Sigma <- matrix(c(x.var, x.cov, 0, 
+    #                   x.cov, x.var, x.cov,
+    #                   0,     x.cov, x.var), ncol = 3)
+    # 
+    # x <- mvrnorm(n = s.size, mu = rep(x.mean, 3),
+    #                  Sigma = Sigma)
+    
+    x <- matrix(0, nrow = s.size, ncol = 3)
+    x[,1] <- x1
+    x[,2] <- x2
+    x[,3] <- x3
+    
   }else if(x.dis == 'dep12'){
     x <- matrix(runif(s.size * xdim, min = 0, max = 1), ncol = xdim)
     tempm <- matrix(0, nrow = s.size, ncol = 2)
@@ -434,10 +480,26 @@ GenSamples <- function(s.size, xdim = 1, x.dis = "uniform",
         frho.para$index_matrix <- index_matrix
         y <- apply(x[,1:D], 1, truef, frho, frho.para) + #only the first D columns of x is relevant
           rnorm(s.size, 0, noise.para)
-        }else{
+      }else if(frho == 'block_diag_sparse_linear'){
+      ##this is a linear truth, used together with x.dis = 'block_diag'. 
+      ##only the first feature in each block is causally accociated with the outcome
+        all_dim <- 1:xdim
+        x.block.size <- x.para[[4]]
+        causal_dim <- all_dim[all_dim %% x.block.size == 1] #identify which features are useful
+        causal_x <- matrix(x[,causal_dim], nrow = s.size)
+        y <- apply(causal_x, 1, truef, 'linear', frho.para) + 
+          rnorm(s.size, 0, noise.para)
+      }else if(frho == 'block_diag_overlap_sparse_linear'){
+        ##this is an adversarial example, one redundant feature is associated with two causal features
+        causal_x <- matrix(x[,c(1,3)], nrow = s.size)
+        y <- apply(causal_x, 1, truef, 'linear', frho.para) + 
+          rnorm(s.size, 0, noise.para)
+      }
+      else{
         y <- apply(x, 1, truef, frho, frho.para) + 
           rnorm(s.size, 0, noise.para)
-        }
+      }
+      
      
     }
   }else if(y.type == 'binary'){
