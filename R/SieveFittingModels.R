@@ -523,6 +523,12 @@ truef <- function(x, FUN = 'linear', para = NULL){
     for(i in 1:xdim){
       y <- y + x[i]
     }
+  }else if(FUN == 'constant'){
+    y <- 1  
+  }else if(FUN == 'piecewise_constant'){
+    y <- as.numeric(x[1] > 0.5)
+  }else if(FUN == 'piecewise_linear'){
+    y <- as.numeric(x[1] > 0.5) + x[1]
   }else if(FUN == 'additive'){
     D <- para
     for(i in 1:D){
