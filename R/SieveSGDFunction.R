@@ -125,25 +125,48 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
   s <- sieve.model$hyper.para.list$s
   r0 <- sieve.model$hyper.para.list$r0
   omega <- sieve.model$hyper.para.list$omega
-  index_matrix <- sieve.model$index.matrix
-  index.row.prod <- sieve.model$index.row.prod
   type <- sieve.model$type
   M <- length(sieve.model$inf.list)
+  s.size.sofar <- sieve.model$s.size.sofar
+  
+  if(s.size.sofar == 0){ #first time process the data
+    index_matrix <- sieve.model$index.matrix
+    index.row.prod <- sieve.model$index.row.prod
+  }else{
+    print('not first pass')  
+    
+    #####regenerate basis index matrix
+    max.basisN <- ceiling( max(J) * (s.size + s.size.sofar)^(1/(2*min(s) + 1))
+    ) #the maximum number of basis functino needed to process all the data in X
+    xdim <- dim(X)[2] #dimension of predictors
+    index_matrix <- as.matrix(Sieve:::create_index_matrix(xdim, basisN = max.basisN, #the dimension of the index_matrix is specified by D (not xdim)
+                                                          interaction_order = max(interaction_order))[1:max.basisN,], 
+                              ncol = xdim)
+    index.row.prod <- index_matrix[, 1]#index product will be used when determining the basis function-specific learning rate
+    index_matrix <- as.matrix(index_matrix[, -1], ncol = xdim)
+    
+    
+    sieve.model$index.matrix <- index_matrix
+    sieve.model$index.row.prod <- index.row.prod
+  }
   
   for(i in 1:s.size){
+    
+    i.sofar <- i + s.size.sofar #first pass, i.sofar = i
+    
     newx <- matrix(X[i,], nrow = 1)
     newy <- Y[i]
     
-    max.J <- ceiling(max(J) * i^(1/(2*min(s) + 1))) #this is the maximum number of basis functions need to estimated at this step
+    max.J <- ceiling(max(J) * (i.sofar)^(1/(2*min(s) + 1))) #this is the maximum number of basis functions need to estimated at this step
     
     Phi <- Sieve:::Design_M_C(newx, max.J, type, index_matrix) #one row design "matrix"
-
+    
     for(m in 1:M){
       
       #####calculate rolling CV
       
       ###number of basis functions for this hyper-para combination
-      J.m <- J[sieve.model$inf.list[[m]]$hyper.para.index$J] * i^(1/(2* s[sieve.model$inf.list[[m]]$hyper.para.index$s]+ 1))
+      J.m <- J[sieve.model$inf.list[[m]]$hyper.para.index$J] * (i.sofar)^(1/(2* s[sieve.model$inf.list[[m]]$hyper.para.index$s]+ 1))
       J.m <- ceiling(J.m)
       
       beta.f <- sieve.model$inf.list[[m]]$beta.f
@@ -159,7 +182,7 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
       
       ##########update beta's
       ###overall learning rate
-      rn.m <- r0[sieve.model$inf.list[[m]]$hyper.para.index$r0] * i^(-1/(2* s[sieve.model$inf.list[[m]]$hyper.para.index$s]+ 1))
+      rn.m <- r0[sieve.model$inf.list[[m]]$hyper.para.index$r0] * (i.sofar)^(-1/(2* s[sieve.model$inf.list[[m]]$hyper.para.index$s]+ 1))
       
       #####CORE UPDATING STEP
       fnewx.int <- crossprod(beta.f.int, Phi[1:J.m])
@@ -167,7 +190,7 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
       
       beta.f.int <- beta.f.int + rn.m * res * (index.row.prod[1:J.m])^(-2*omega)*Phi[1:J.m]
       
-      beta.f <- (i-1)/i * beta.f + beta.f.int/i
+      beta.f <- (i.sofar-1)/i.sofar * beta.f + beta.f.int/i.sofar
       ################
       
       sieve.model$inf.list[[m]]$beta.f <- beta.f
@@ -175,43 +198,44 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
       
     }
   }
+  #update the current number of sample processed 
+  sieve.model$s.size.sofar <- s.size.sofar + s.size
   
   ######model comparison
   rolling.cvs <- rep(1e10, M)
   for(m in 1:M){
     rolling.cvs[m] <- sieve.model$inf.list[[m]]$rolling.cv
   }
-  print(rolling.cvs/s.size)
+  print(rolling.cvs/s.size.sofar)
   print(which.min(rolling.cvs))
   return(sieve.model)
-  
-  
-  
-  
-  
-  
+
 }
 xdim <- 1
-TrainData <- GenSamples(s.size = 1e4, xdim = xdim)
+frho <- 'lineartensor'
+frho <- 'additive'
+TrainData <- GenSamples(s.size = 1e4, xdim = xdim, frho.para = 1, frho = frho, noise.para = 0.01)
+###noise.para = 0.17 for lineartensor, snr 30, xdim = D = 4; =0.54, snr = 3
 X <- TrainData[,2:(xdim+1)]
 Y <- TrainData[,1]
 sieve.model <- sieve.sgd.preprocess(X = TrainData[,2:(xdim+1)], type = type,
                                     s = c(1,2),
-                                    r0 = c(1,2, 4),
-                                    J = c(0.5,1,2))
+                                    r0 = c(0.5, 2, 4),
+                                    J = c(0.5, 2, 4))
 sieve.model= sieve.sgd.solver(sieve.model = sieve.model, X = X, Y  = Y)
-raw$inf.list[[12]]
-raw$inf.list[[2]]
-raw$inf.list[[4]]
+sieve.model$inf.list[[13]]$hyper.para.index
+sieve.model$inf.list[[2]]
+sieve.model$inf.list[[4]]
 
-TestData <- GenSamples(s.size = 1e4, xdim = xdim, noise.para = 0)
-X <- TestData[,2:(xdim+1)]
-Y <- TestData[,1]
+TestData <- GenSamples(s.size = 5e3, xdim = xdim, frho.para = 1, frho = frho, noise.para = 0)
+# X <- TestData[,2:(xdim+1)]
+# Y <- TestData[,1]
 sieve.model <- sieve.sgd.predict(sieve.model, TestData[,2:(xdim+1)])
 
-mean((Y - sieve.model$inf.list[[13]]$prdy)^2)
-mean((Y - sieve.model$inf.list[[14]]$prdy)^2)
+mean((TestData[,1] - sieve.model$inf.list[[9]]$prdy)^2)
+mean((Y - sieve.model$inf.list[[15]]$prdy)^2)
 mean((Y - sieve.model$inf.list[[6]]$prdy)^2)
+plot(X, sieve.model$inf.list[[15]]$prdy)
 
 sieve.sgd.predict <- function(sieve.model, X){
   
@@ -260,4 +284,9 @@ sieve.sgd.predict <- function(sieve.model, X){
   
 }
 
-
+######things i need to do
+####prevent float number overflow
+####able to process the data several times √
+####other kinds of loss functions
+####a better summary report. better documentation of the code.
+####dynamically generating extra index matrix √
