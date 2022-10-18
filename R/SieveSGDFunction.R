@@ -74,7 +74,7 @@ sieve.sgd.preprocess <- function(X, s = c(2), r0 = c(2), J = c(1), type = c('cos
                                                 interaction_order = max(interaction_order))[1:max.basisN,], 
                             ncol = xdim)
   index.row.prod <- index_matrix[, 1]#index product will be used when determining the basis function-specific learning rate
-  index_matrix <- index_matrix[, -1]
+  index_matrix <- as.matrix(index_matrix[, -1], ncol = xdim)
   
   ####generate the list storing fitted beta and rolling cross-validation stat
   M <- dim(hyper.para.index.matrix)[1] #number of hyperparameter combinations
@@ -191,16 +191,16 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
   
   
 }
-xdim <- 2
+xdim <- 1
 TrainData <- GenSamples(s.size = 1e4, xdim = xdim)
 X <- TrainData[,2:(xdim+1)]
 Y <- TrainData[,1]
 sieve.model <- sieve.sgd.preprocess(X = TrainData[,2:(xdim+1)], type = type,
-                                    s = c(0.6,1,2),
+                                    s = c(0.3,1,2),
                                     r0 = c(1,2, 4),
                                     J = c(0.5,1,2))
 raw = sieve.sgd.solver(sieve.model = sieve.model, X = X, Y  = Y)
-raw$inf.list[[27]]
+raw$inf.list[[12]]
 raw$inf.list[[2]]
 raw$inf.list[[4]]
 
