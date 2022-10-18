@@ -196,11 +196,68 @@ TrainData <- GenSamples(s.size = 1e4, xdim = xdim)
 X <- TrainData[,2:(xdim+1)]
 Y <- TrainData[,1]
 sieve.model <- sieve.sgd.preprocess(X = TrainData[,2:(xdim+1)], type = type,
-                                    s = c(0.3,1,2),
+                                    s = c(1,2),
                                     r0 = c(1,2, 4),
                                     J = c(0.5,1,2))
-raw = sieve.sgd.solver(sieve.model = sieve.model, X = X, Y  = Y)
+sieve.model= sieve.sgd.solver(sieve.model = sieve.model, X = X, Y  = Y)
 raw$inf.list[[12]]
 raw$inf.list[[2]]
 raw$inf.list[[4]]
+
+TestData <- GenSamples(s.size = 1e4, xdim = xdim, noise.para = 0)
+X <- TestData[,2:(xdim+1)]
+Y <- TestData[,1]
+sieve.model <- sieve.sgd.predict(sieve.model, TestData[,2:(xdim+1)])
+
+mean((Y - sieve.model$inf.list[[13]]$prdy)^2)
+mean((Y - sieve.model$inf.list[[14]]$prdy)^2)
+mean((Y - sieve.model$inf.list[[6]]$prdy)^2)
+
+sieve.sgd.predict <- function(sieve.model, X){
+  
+  #####normalize the X. Make sure the format of everything is correct.
+  #s.size is sample size
+  if(is(X,'numeric') | is(X, 'factor')){
+    s.size <- length(X) #this is a univariate regression problem, sometimes the input data.frame is automatically conveted to an array
+  }else{
+    s.size <- dim(X)[1]
+  }
+  
+  X <- sapply(X,unclass) #convert categorical variables into numeric variables
+  X <- matrix(X, nrow = s.size)
+  
+  norm_para <- sieve.model$norm.para
+  if(is.null(norm_para)){
+    warning('there is no normalization parameter for X, 
+            please use sieve.sgd.preprocess to preprocess the data.')  
+  }
+  
+  norm_list <- Sieve:::normalize_X(X, norm_para = norm_para)
+  X <- norm_list$X
+  
+  #####feed in the data one by one
+  J <- sieve.model$hyper.para.list$J
+  s <- sieve.model$hyper.para.list$s
+  # r0 <- sieve.model$hyper.para.list$r0
+  # omega <- sieve.model$hyper.para.list$omega
+  index_matrix <- sieve.model$index.matrix
+  # index.row.prod <- sieve.model$index.row.prod
+  type <- sieve.model$type
+  M <- length(sieve.model$inf.list)
+  
+  for(m in 1:M){
+    #determine how many basis functions are needed
+    J.m <- length(sieve.model$inf.list[[m]]$beta.f)
+    
+    Phi <- Sieve:::Design_M_C(X, J.m, type, index_matrix)
+    
+    tmp.prdy <- Sieve:::crossprod_C(Phi, matrix(sieve.model$inf.list[[m]]$beta.f))
+    
+    sieve.model$inf.list[[m]]$prdy <- tmp.prdy
+  }
+  
+  return(sieve.model)
+  
+}
+
 
