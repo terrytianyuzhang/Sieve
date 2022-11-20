@@ -1,12 +1,10 @@
-#' Preprocess the original data for sieve estimation.
-#'
-#' Convert the covariates into numerical variables and normalize them.
+#' Preprocess the original data for sieve-SGD estimation.
 #' 
 #' @param X a data frame containing prediction features/ independent variables. The (i,j)-th element is the j-th dimension of the i-th sample's feature vector. 
 #' So the number of rows equals to the sample size and the number of columns equals to the feature/covariate dimension. If the complete data set is large, this can be a representative subset of it (ideally have more than 1000 samples). 
 #' @param s numerical array. Smoothness parameter. Default is 2. The elements of this array should take values greater than 0.5. The larger s is, the smoother we are assuming the truth to be.
 #' @param r0 numerical array. Initial learning rate/step size. The step size at each iteration will be r0*(sample size)^(-1/(2s+1)), which is slowly decaying.
-#' @param J numerical array. Initial number of basis functions. The number of basis functions at each iteration will be J*(sample size)^(1/(2s+1)), which is slowly increasing.
+#' @param J numerical array. Initial number of basis functions. The number of basis functions at each iteration will be J*(sample size)^(1/(2s+1)), which is slowly increasing. We recommend use J that is at least the dimension of predictor, i.e. the column number of the X matrix.
 #' @param type a string. It specifies what kind of basis functions are used. The default is (aperiodic) cosine basis functions, which is suitable for most purpose.
 #' @param interaction_order a number. It also controls the model complexity. 1 means fitting an additive model, 2 means fitting a model allows, 3 means interaction terms between 3 dimensions of the feature, etc. The default is 3. 
 #' For large sample size, lower dimension problems, try a larger value (but need to be smaller than the dimension of original features); for smaller sample size and higher dimensional problems, try set it to a smaller value (1 or 2).
@@ -15,11 +13,15 @@
 #' @param lower_q lower quantile used in normalization. Default is 0.01 (1% quantile).
 #' @param upper_q upper quantile used in normalization. Default is 0.99 (99% quantile).
 #'
-#' @return A list containing the necessary information for next step model fitting. Typically, the list is used as the main input of Sieve::sieve_solver.
+#' @return A list containing the necessary information for next step model fitting. Typically, the list is used as the main input of sieve.sgd.solver.
+#' \item{s.size.sofar}{a number. Number of samples has been processed so far.}
 #' \item{type}{a string. The type of basis funtion.}
-#' \item{interaction_order}{the highest order of interaction.}
+#' \item{hyper.para.list}{a list of hyperparameters.}
+#' \item{index.matrix}{a matrix. Identifies the multivariate basis functions used in fitting.}
+#' \item{index.row.prod}{the index product for each basis function. It is used in calculating basis function - specific learning rates.}
+#' \item{inf.list}{a list storing the fitted results. It has a length of "number of unique combinations of the hyperparameters". The component of inf.list is itself a list, it has a hyper.para.index domain to specify its corresponding hyperparameters (need to be used together with hyper.para.list). Its rolling.cv domain is the progressive validation statistics for hyperparameter tuning; beta.f is the regression coefficients for the first length(beta.f) basis functions, the rest of the basis have 0 coefficients.}
 #' \item{norm_para}{a matrix. It records how each dimension of the feature/predictor is rescaled, which is useful when rescaling the testing sample's predictors.}
-#' \item{X}{a matrix. This is the rescaled original covariate matrix.} 
+
 #' @examples 
 #' xdim <- 1 #1 dimensional feature
 #' #generate 1000 training samples
@@ -30,7 +32,7 @@
 #' @export
 #'
 sieve.sgd.preprocess <- function(X, s = c(2), r0 = c(2), J = c(1), type = c('cosine'), 
-                             interaction_order = c(3), 
+                             interaction_order = c(3), omega = c(0.51),
                              norm_feature = TRUE, norm_para = NULL,
                              lower_q = 0.005, upper_q = 0.995){
   
@@ -59,7 +61,7 @@ sieve.sgd.preprocess <- function(X, s = c(2), r0 = c(2), J = c(1), type = c('cos
   #####hyperparameter list
   hyper.para.list <- list(s = s, r0 = r0,
                           J = J, interaction_order = interaction_order,
-                          omega = 0.51) #omega is related to a basis function-specific learning rate
+                          omega = omega) #omega is related to a basis function-specific learning rate
   
   #####generate hyperparameter index matrix
   hyper.para.index.matrix <- expand.grid(1:length(s), 1:length(r0), 1:length(J),
@@ -96,6 +98,50 @@ sieve.sgd.preprocess <- function(X, s = c(2), r0 = c(2), J = c(1), type = c('cos
               norm.para = norm_para))
 }
 
+#' Fit sieve-SGD estimators, using progressive validation for hyperparameter tuning.
+#' 
+#' @param sieve.model a list initiated using sieve.sgd.preprocess. Check the documentation of sieve.sgd.preprocess for more information.
+#' @param X a data frame containing prediction features/ independent variables. 
+#' @param Y training outcome.
+#' 
+#' @return A list. It contains the fitted regression coefficients and progressive validation statistics for each hyperparameter combination.
+#' \item{s.size.sofar}{a number. Number of samples has been processed so far.}
+#' \item{type}{a string. The type of basis funtion.}
+#' \item{hyper.para.list}{a list of hyperparameters.}
+#' \item{index.matrix}{a matrix. Identifies the multivariate basis functions used in fitting.}
+#' \item{index.row.prod}{the index product for each basis function. It is used in calculating basis function - specific learning rates.}
+#' \item{inf.list}{a list storing the fitted results. It has a length of "number of unique combinations of the hyperparameters". The component of inf.list is itself a list, it has a hyper.para.index domain to specify its corresponding hyperparameters (need to be used together with hyper.para.list). Its rolling.cv domain is the progressive validation statistics for hyperparameter tuning; beta.f is the regression coefficients for the first length(beta.f) basis functions, the rest of the basis have 0 coefficients.}
+#' \item{norm_para}{a matrix. It records how each dimension of the feature/predictor is rescaled, which is useful when rescaling the testing sample's predictors.}
+
+#' @examples 
+#' frho.para <- xdim <- 2 ##predictor dimension
+#' frho <- 'additive' ###truth is a sum of absolute functions 
+#' type <- 'cosine' ###use cosine functions as the basis functions
+#' #generate training data
+#' TrainData <- GenSamples(s.size = 1e3, xdim = xdim, 
+#'                                 frho.para = frho.para, 
+#'                                 frho = frho, noise.para = 0.1)
+#' #preprocess the model
+#' sieve.model <- sieve.sgd.preprocess(X = TrainData[,2:(xdim+1)], 
+#'                                     type = type,
+#'                                     s = c(1,2),
+#'                                     r0 = c(0.5, 2, 4),
+#'                                     J = c(1, 4, 8))
+#' 
+#' ##train the model
+#' sieve.model <- sieve.sgd.solver(sieve.model = sieve.model, 
+#'                                 X = TrainData[,2:(xdim+1)], 
+#'                                 Y  = TrainData[,1])
+#' 
+#' ##sieve-SGD can do multiple passes over the data, just like other SGD methods.
+#' ##usually a second pass can still improve the prediction accuracy
+#' ##watch out overfitting when performing multiple passes!
+#' sieve.model <- sieve.sgd.solver(sieve.model = sieve.model, 
+#'                               X = TrainData[,2:(xdim+1)], 
+#'                               Y  = TrainData[,1])
+
+#' @export
+#' 
 sieve.sgd.solver <- function(sieve.model, X, Y){
   ####this function process the training X,Y using sieve-SGD
   ####also it uses rolling cross-validation to choose hyper-parameters
@@ -125,6 +171,7 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
   s <- sieve.model$hyper.para.list$s
   r0 <- sieve.model$hyper.para.list$r0
   omega <- sieve.model$hyper.para.list$omega
+  interaction_order <- sieve.model$hyper.para.list$interaction_order
   type <- sieve.model$type
   M <- length(sieve.model$inf.list)
   s.size.sofar <- sieve.model$s.size.sofar
@@ -133,7 +180,7 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
     index_matrix <- sieve.model$index.matrix
     index.row.prod <- sieve.model$index.row.prod
   }else{
-    print('not first pass')  
+    print('not training from the beginning')  
     
     #####regenerate basis index matrix
     max.basisN <- ceiling( max(J) * (s.size + s.size.sofar)^(1/(2*min(s) + 1))
@@ -184,7 +231,7 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
       ###overall learning rate
       rn.m <- r0[sieve.model$inf.list[[m]]$hyper.para.index$r0] * (i.sofar)^(-1/(2* s[sieve.model$inf.list[[m]]$hyper.para.index$s]+ 1))
       
-      #####CORE UPDATING STEP
+      #####CORE UPDATING STEPS
       fnewx.int <- crossprod(beta.f.int, Phi[1:J.m])
       res <- as.numeric(newy - fnewx.int)
       
@@ -201,42 +248,79 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
   #update the current number of sample processed 
   sieve.model$s.size.sofar <- s.size.sofar + s.size
   
-  ######model comparison
-  rolling.cvs <- rep(1e10, M)
-  for(m in 1:M){
-    rolling.cvs[m] <- sieve.model$inf.list[[m]]$rolling.cv
-  }
-  print(rolling.cvs/s.size.sofar)
-  print(which.min(rolling.cvs))
+  # ######model comparison
+  # rolling.cvs <- rep(1e10, M)
+  # for(m in 1:M){
+  #   rolling.cvs[m] <- sieve.model$inf.list[[m]]$rolling.cv
+  # }
+  # print(rolling.cvs/sieve.model$s.size.sofar)
+  # print(which.min(rolling.cvs))
   return(sieve.model)
 
 }
-xdim <- 1
-frho <- 'lineartensor'
-frho <- 'additive'
-TrainData <- GenSamples(s.size = 1e4, xdim = xdim, frho.para = 1, frho = frho, noise.para = 0.01)
-###noise.para = 0.17 for lineartensor, snr 30, xdim = D = 4; =0.54, snr = 3
-X <- TrainData[,2:(xdim+1)]
-Y <- TrainData[,1]
-sieve.model <- sieve.sgd.preprocess(X = TrainData[,2:(xdim+1)], type = type,
-                                    s = c(1,2),
-                                    r0 = c(0.5, 2, 4),
-                                    J = c(0.5, 2, 4))
-sieve.model= sieve.sgd.solver(sieve.model = sieve.model, X = X, Y  = Y)
-sieve.model$inf.list[[13]]$hyper.para.index
-sieve.model$inf.list[[2]]
-sieve.model$inf.list[[4]]
 
-TestData <- GenSamples(s.size = 5e3, xdim = xdim, frho.para = 1, frho = frho, noise.para = 0)
-# X <- TestData[,2:(xdim+1)]
-# Y <- TestData[,1]
-sieve.model <- sieve.sgd.predict(sieve.model, TestData[,2:(xdim+1)])
+# xdim <- 2
+# frho <- 'lineartensor'
+# frho <- 'additive'
+# TrainData <- GenSamples(s.size = 1e4, xdim = xdim, frho.para = 1, frho = frho, noise.para = 0.01)
+# ###noise.para = 0.17 for lineartensor, snr 30, xdim = D = 4; =0.54, snr = 3
+# X <- TrainData[,2:(xdim+1)]
+# Y <- TrainData[,1]
+# sieve.model <- sieve.sgd.preprocess(X = TrainData[,2:(xdim+1)], type = type,
+#                                     s = c(1,2),
+#                                     r0 = c(0.5, 2, 4),
+#                                     J = c(0.5, 2, 4))
+# sieve.model = sieve.sgd.solver(sieve.model = sieve.model, X = X, Y  = Y)
+# sieve.model$inf.list[[13]]$hyper.para.index
+# sieve.model$inf.list[[2]]
+# sieve.model$inf.list[[4]]
 
-mean((TestData[,1] - sieve.model$inf.list[[9]]$prdy)^2)
-mean((Y - sieve.model$inf.list[[15]]$prdy)^2)
-mean((Y - sieve.model$inf.list[[6]]$prdy)^2)
-plot(X, sieve.model$inf.list[[15]]$prdy)
+# TestData <- GenSamples(s.size = 5e3, xdim = xdim, frho.para = 1, frho = frho, noise.para = 0)
+# # X <- TestData[,2:(xdim+1)]
+# # Y <- TestData[,1]
+# sieve.model <- sieve.sgd.predict(sieve.model, TestData[,2:(xdim+1)])
+# 
+# mean((TestData[,1] - sieve.model$inf.list[[9]]$prdy)^2)
+# mean((Y - sieve.model$inf.list[[15]]$prdy)^2)
+# mean((Y - sieve.model$inf.list[[6]]$prdy)^2)
+# plot(X, sieve.model$inf.list[[15]]$prdy)
 
+
+#' Sieve-SGD makes prediction with new predictors.
+#' 
+#' @param sieve.model a list initiated using sieve.sgd.preprocess and sieve.sgd.solver. Check the documentation of sieve.sgd.preprocess for more information.
+#' @param X a data frame containing prediction features/ independent variables. 
+
+#' @return sieve.sgd.predict will update the given sieve.model input list.
+#' \item{inf.list}{In each entry of the list inf.list, the array prdy is the predicted outcome under the given hyperparameter combination.}
+
+#' @examples 
+#' frho.para <- xdim <- 2 ##predictor dimension
+#' frho <- 'additive' ###truth is a sum of absolute functions 
+#' type <- 'cosine' ###use cosine functions as the basis functions
+#' #generate training data
+#' TrainData <- GenSamples(s.size = 1e3, xdim = xdim, 
+#'                                 frho.para = frho.para, 
+#'                                 frho = frho, noise.para = 0.1)
+#' #preprocess the model
+#' sieve.model <- sieve.sgd.preprocess(X = TrainData[,2:(xdim+1)], 
+#'                                     type = type,
+#'                                     s = c(1,2),
+#'                                     r0 = c(0.5, 2, 4),
+#'                                     J = c(1, 4, 8))
+#' 
+#' ##train the model
+#' sieve.model <- sieve.sgd.solver(sieve.model = sieve.model, 
+#'                                 X = TrainData[,2:(xdim+1)], 
+#'                                 Y  = TrainData[,1])
+#' ##generate new data
+#' NewData <- GenSamples(s.size = 5e2, xdim = xdim, 
+#'                       frho.para = frho.para, 
+#'                       frho = frho, noise.para = 0.1)
+#' sieve.model.with.prdy <- sieve.sgd.predict(sieve.model, X = NewData[, 2:(xdim+1)])
+#' 
+#' @export
+#' 
 sieve.sgd.predict <- function(sieve.model, X){
   
   #####normalize the X. Make sure the format of everything is correct.
@@ -283,6 +367,7 @@ sieve.sgd.predict <- function(sieve.model, X){
   return(sieve.model)
   
 }
+
 
 ######things i need to do
 ####prevent float number overflow
