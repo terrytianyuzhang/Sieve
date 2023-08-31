@@ -168,12 +168,21 @@ sieve_solver <- function(model, Y, l1 = TRUE, family = "gaussian",
   }
 }
 
-
+#' Create the index matrix for multivariate regression
+#'
+#' @param xdim a number. It specifies the predictors' dimension.
+#' @param basisN a number. The number of basis function to use.
+#' @param maxj a number. We use this to specify the largest row product in the index list.
+#' @param interaction_order a number The maximum order of interaction. 1 means additive model, 2 means including pairwise interaction terms, etc.
+#'
+#' @return a matrix. The first column is the product of the indices, the rest columns are the index vectors for constructing multivariate basis functions.
+#' @export
+#'
 create_index_matrix <- function(xdim, basisN = NULL, maxj = NULL, interaction_order = 5){
   #xdim: the dimension of feature x
-  #dimlimit: the working dimension, same as D' in the paper
   #basisN: default is NULL. We use this to specify the total number of rows in the index list.
   #maxj: default is NULL. We use this to specify the largest row product in the index list.
+  #interaction_order: the maximum order of interaction. 1 means additive model, 2 means including pairwise interaction terms, etc.
   
   index_matrix <- matrix(1, nrow = 1, ncol = xdim) #first row is all 1
   interaction_order <- min(interaction_order, xdim) #this determines the maximal number of non-1 elements each row
@@ -534,6 +543,11 @@ truef <- function(x, FUN = 'linear', para = NULL){
     for(i in 1:D){
       y <- y + as.numeric(i %% 2 == 1)*(0.5 - abs(x[i]-0.5)) + as.numeric(i %% 2 == 0)*exp(-x[i])
       # y <- y+ (x[i] * x[i])^2 + (x[i] * x[i+1])^3 + sin(3*x[i])*x[i+2] + x[i]^2*sin(x[i+2])
+    }
+  }else if(FUN == 'theoretical_cosine'){
+    decay_rate <- para
+    for(basis_function_index in 1:30){
+      y <- y + basis_function_index^(-decay_rate) * cos((basis_function_index - 1) * pi * x[1])
     }
   }else if(FUN == 'interaction'){
     D <- para
