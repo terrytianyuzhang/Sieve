@@ -49,7 +49,7 @@ sieve.sgd.preprocess <- function(X, s = c(2), r0 = c(2), J = c(1), type = c('cos
   X <- matrix(X, nrow = s.size)
   
   if(norm_feature){
-    norm_list <- Sieve:::normalize_X(X, norm_para = norm_para, 
+    norm_list <- normalize_X(X, norm_para = norm_para, 
                                      lower_q = lower_q, upper_q = upper_q)
     # X <- norm_list$X
     norm_para <- norm_list$norm_para
@@ -72,7 +72,7 @@ sieve.sgd.preprocess <- function(X, s = c(2), r0 = c(2), J = c(1), type = c('cos
   max.basisN <- ceiling( max(J) * s.size^(1/(2*min(s) + 1))
                         ) #the maximum number of basis functino needed to process all the data in X
   xdim <- dim(X)[2] #dimension of predictors
-  index_matrix <- as.matrix(Sieve:::create_index_matrix(xdim, basisN = max.basisN, #the dimension of the index_matrix is specified by D (not xdim)
+  index_matrix <- as.matrix(create_index_matrix(xdim, basisN = max.basisN, #the dimension of the index_matrix is specified by D (not xdim)
                                                 interaction_order = max(interaction_order))[1:max.basisN,], 
                             ncol = xdim)
   index.row.prod <- index_matrix[, 1]#index product will be used when determining the basis function-specific learning rate
@@ -163,7 +163,7 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
             please use sieve.sgd.preprocess to preprocess the data.')  
   }
   
-  norm_list <- Sieve:::normalize_X(X, norm_para = norm_para)
+  norm_list <- normalize_X(X, norm_para = norm_para)
   X <- norm_list$X
   
   #####feed in the data one by one
@@ -186,7 +186,7 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
     max.basisN <- ceiling( max(J) * (s.size + s.size.sofar)^(1/(2*min(s) + 1))
     ) #the maximum number of basis functino needed to process all the data in X
     xdim <- dim(X)[2] #dimension of predictors
-    index_matrix <- as.matrix(Sieve:::create_index_matrix(xdim, basisN = max.basisN, #the dimension of the index_matrix is specified by D (not xdim)
+    index_matrix <- as.matrix(create_index_matrix(xdim, basisN = max.basisN, #the dimension of the index_matrix is specified by D (not xdim)
                                                           interaction_order = max(interaction_order))[1:max.basisN,], 
                               ncol = xdim)
     index.row.prod <- index_matrix[, 1]#index product will be used when determining the basis function-specific learning rate
@@ -206,7 +206,7 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
     
     max.J <- ceiling(max(J) * (i.sofar)^(1/(2*min(s) + 1))) #this is the maximum number of basis functions need to estimated at this step
     
-    Phi <- Sieve:::Design_M_C(newx, max.J, type, index_matrix) #one row design "matrix"
+    Phi <- Design_M_C(newx, max.J, type, index_matrix) #one row design "matrix"
     
     for(m in 1:M){
       
@@ -340,7 +340,7 @@ sieve.sgd.predict <- function(sieve.model, X){
             please use sieve.sgd.preprocess to preprocess the data.')  
   }
   
-  norm_list <- Sieve:::normalize_X(X, norm_para = norm_para)
+  norm_list <- normalize_X(X, norm_para = norm_para)
   X <- norm_list$X
   
   #####feed in the data one by one
@@ -357,9 +357,9 @@ sieve.sgd.predict <- function(sieve.model, X){
     #determine how many basis functions are needed
     J.m <- length(sieve.model$inf.list[[m]]$beta.f)
     
-    Phi <- Sieve:::Design_M_C(X, J.m, type, index_matrix)
+    Phi <- Design_M_C(X, J.m, type, index_matrix)
     
-    tmp.prdy <- Sieve:::crossprod_C(Phi, matrix(sieve.model$inf.list[[m]]$beta.f))
+    tmp.prdy <- crossprod_C(Phi, matrix(sieve.model$inf.list[[m]]$beta.f))
     
     sieve.model$inf.list[[m]]$prdy <- tmp.prdy
   }
