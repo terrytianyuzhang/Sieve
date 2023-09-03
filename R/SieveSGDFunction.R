@@ -8,11 +8,12 @@
 #' @param type a string. It specifies what kind of basis functions are used. The default is (aperiodic) cosine basis functions, which is suitable for most purpose.
 #' @param interaction_order a number. It also controls the model complexity. 1 means fitting an additive model, 2 means fitting a model allows, 3 means interaction terms between 3 dimensions of the feature, etc. The default is 3. 
 #' For large sample size, lower dimension problems, try a larger value (but need to be smaller than the dimension of original features); for smaller sample size and higher dimensional problems, try set it to a smaller value (1 or 2).
+#' @param omega the rate of dimension-reduction parameter. Default is 0.51, usually do not need to change.
 #' @param norm_feature a logical variable. Default is TRUE. It means sieve_preprocess will rescale the each dimension of features to 0 and 1. Only set to FALSE when user already manually rescale them between 0 and 1.
 #' @param norm_para a matrix. It specifies how the features are normalized. For training data, use the default value NULL.
-#' @param lower_q lower quantile used in normalization. Default is 0.01 (1% quantile).
-#' @param upper_q upper quantile used in normalization. Default is 0.99 (99% quantile).
-#'
+#' @param lower_q lower quantile used in normalization. Default is 0.01 (1\% quantile).
+#' @param upper_q upper quantile used in normalization. Default is 0.99 (99\% quantile).
+#' 
 #' @return A list containing the necessary information for next step model fitting. Typically, the list is used as the main input of sieve.sgd.solver.
 #' \item{s.size.sofar}{a number. Number of samples has been processed so far.}
 #' \item{type}{a string. The type of basis funtion.}
@@ -371,7 +372,7 @@ sieve.sgd.predict <- function(sieve.model, X){
 
 ######things i need to do
 ####prevent float number overflow
-####able to process the data several times √
+####able to process the data several times 
 ####other kinds of loss functions
 ####a better summary report. better documentation of the code.
-####dynamically generating extra index matrix √
+####dynamically generating extra index matrix 

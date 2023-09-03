@@ -14,3 +14,4 @@ Imports: Rcpp (>= 1.0.7),
 	 MASS
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.2.3
+Encoding: UTF-8
