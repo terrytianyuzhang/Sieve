@@ -7,7 +7,7 @@ Author: Tianyu Zhang
 Maintainer: Tianyu Zhang <tianyuz3@andrew.cmu.edu>
 Description: Performs multivariate nonparametric regression/classification by the method of sieves (using orthogonal basis). The method is suitable for moderate high-dimensional features (dimension < 100). The l1-penalized sieve estimator, a nonparametric generalization of Lasso, is adaptive to the feature dimension with provable theoretical guarantees. We also include a nonparametric stochastic gradient descent estimator, Sieve-SGD, for online or large scale batch problems. Details of the methods and model assumptions can be found in: <arXiv:2206.02994> <arXiv:2104.00846>.
 License: GPL-2
-Imports: Rcpp (>= 1.0.7),
+Imports: Rcpp,
 	 combinat,
 	 glmnet,
 	 methods,
