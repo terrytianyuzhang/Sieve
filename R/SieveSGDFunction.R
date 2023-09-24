@@ -143,7 +143,8 @@ sieve.sgd.preprocess <- function(X, s = c(2), r0 = c(2), J = c(1), type = c('cos
 
 #' @export
 #' 
-sieve.sgd.solver <- function(sieve.model, X, Y){
+sieve.sgd.solver <- function(sieve.model, X, Y,
+                             cv_weight_rate = 1){
   ####this function process the training X,Y using sieve-SGD
   ####also it uses rolling cross-validation to choose hyper-parameters
   
@@ -226,7 +227,7 @@ sieve.sgd.solver <- function(sieve.model, X, Y){
       }
       
       fnewx <- crossprod(beta.f, Phi[1:J.m]) ###f_i(X_{i+1})
-      sieve.model$inf.list[[m]]$rolling.cv <- sieve.model$inf.list[[m]]$rolling.cv + (newy - fnewx)^2
+      sieve.model$inf.list[[m]]$rolling.cv <- sieve.model$inf.list[[m]]$rolling.cv + i.sofar^(cv_weight_rate) * (newy - fnewx)^2
       
       ##########update beta's
       ###overall learning rate
