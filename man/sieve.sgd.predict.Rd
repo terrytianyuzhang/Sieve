@@ -19,7 +19,7 @@ sieve.sgd.predict will update the given sieve.model input list.
 Sieve-SGD makes prediction with new predictors.
 }
 \examples{
-frho.para <- xdim <- 2 ##predictor dimension
+frho.para <- xdim <- 1 ##predictor dimension
 frho <- 'additive' ###truth is a sum of absolute functions 
 type <- 'cosine' ###use cosine functions as the basis functions
 #generate training data
@@ -41,6 +41,6 @@ sieve.model <- sieve.sgd.solver(sieve.model = sieve.model,
 NewData <- GenSamples(s.size = 5e2, xdim = xdim, 
                       frho.para = frho.para, 
                       frho = frho, noise.para = 0.1)
-sieve.model.with.prdy <- sieve.sgd.predict(sieve.model, X = NewData[, 2:(xdim+1)])
-
+sieve.model <- sieve.sgd.predict(sieve.model, X = NewData[, 2:(xdim+1)])
+plot(NewData[, 2:(xdim+1)], sieve.model$best_model$prdy)
 }

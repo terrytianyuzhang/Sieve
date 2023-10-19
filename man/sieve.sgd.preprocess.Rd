@@ -22,13 +22,13 @@ sieve.sgd.preprocess(
 \item{X}{a data frame containing prediction features/ independent variables. The (i,j)-th element is the j-th dimension of the i-th sample's feature vector. 
 So the number of rows equals to the sample size and the number of columns equals to the feature/covariate dimension. If the complete data set is large, this can be a representative subset of it (ideally have more than 1000 samples).}
 
-\item{s}{numerical array. Smoothness parameter. Default is 2. The elements of this array should take values greater than 0.5. The larger s is, the smoother we are assuming the truth to be.}
+\item{s}{numerical array. Smoothness parameter, a smaller s corresponds to a more flexible model. Default is 2. The elements of this array should take values greater than 0.5. The larger s is, the smoother we are assuming the truth to be.}
 
-\item{r0}{numerical array. Initial learning rate/step size. The step size at each iteration will be r0*(sample size)^(-1/(2s+1)), which is slowly decaying.}
+\item{r0}{numerical array. Initial learning rate/step size, don't set it too large. The step size at each iteration will be r0*(sample size)^(-1/(2s+1)), which is slowly decaying.}
 
-\item{J}{numerical array. Initial number of basis functions. The number of basis functions at each iteration will be J*(sample size)^(1/(2s+1)), which is slowly increasing. We recommend use J that is at least the dimension of predictor, i.e. the column number of the X matrix.}
+\item{J}{numerical array. Initial number of basis functions, a larger J corresponds to a more flexible estimator The number of basis functions at each iteration will be J*(sample size)^(1/(2s+1)), which is slowly increasing. We recommend use J that is at least the dimension of predictor, i.e. the column number of the X matrix.}
 
-\item{type}{a string. It specifies what kind of basis functions are used. The default is (aperiodic) cosine basis functions, which is suitable for most purpose.}
+\item{type}{a string. It specifies what kind of basis functions are used. The default is (aperiodic) cosine basis functions ('cosine'), which is enough for generic usage.}
 
 \item{interaction_order}{a number. It also controls the model complexity. 1 means fitting an additive model, 2 means fitting a model allows, 3 means interaction terms between 3 dimensions of the feature, etc. The default is 3. 
 For large sample size, lower dimension problems, try a larger value (but need to be smaller than the dimension of original features); for smaller sample size and higher dimensional problems, try set it to a smaller value (1 or 2).}
@@ -60,7 +60,5 @@ Preprocess the original data for sieve-SGD estimation.
 xdim <- 1 #1 dimensional feature
 #generate 1000 training samples
 TrainData <- GenSamples(s.size = 1000, xdim = xdim)
-#use 50 cosine basis functions
-type <- 'cosine'
-sieve.model <- sieve.sgd.preprocess(X = TrainData[,2:(xdim+1)], type = type)
+sieve.model <- sieve.sgd.preprocess(X = TrainData[,2:(xdim+1)])
 }

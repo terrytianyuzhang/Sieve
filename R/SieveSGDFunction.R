@@ -2,10 +2,10 @@
 #' 
 #' @param X a data frame containing prediction features/ independent variables. The (i,j)-th element is the j-th dimension of the i-th sample's feature vector. 
 #' So the number of rows equals to the sample size and the number of columns equals to the feature/covariate dimension. If the complete data set is large, this can be a representative subset of it (ideally have more than 1000 samples). 
-#' @param s numerical array. Smoothness parameter. Default is 2. The elements of this array should take values greater than 0.5. The larger s is, the smoother we are assuming the truth to be.
-#' @param r0 numerical array. Initial learning rate/step size. The step size at each iteration will be r0*(sample size)^(-1/(2s+1)), which is slowly decaying.
-#' @param J numerical array. Initial number of basis functions. The number of basis functions at each iteration will be J*(sample size)^(1/(2s+1)), which is slowly increasing. We recommend use J that is at least the dimension of predictor, i.e. the column number of the X matrix.
-#' @param type a string. It specifies what kind of basis functions are used. The default is (aperiodic) cosine basis functions, which is suitable for most purpose.
+#' @param s numerical array. Smoothness parameter, a smaller s corresponds to a more flexible model. Default is 2. The elements of this array should take values greater than 0.5. The larger s is, the smoother we are assuming the truth to be.
+#' @param r0 numerical array. Initial learning rate/step size, don't set it too large. The step size at each iteration will be r0*(sample size)^(-1/(2s+1)), which is slowly decaying.
+#' @param J numerical array. Initial number of basis functions, a larger J corresponds to a more flexible estimator The number of basis functions at each iteration will be J*(sample size)^(1/(2s+1)), which is slowly increasing. We recommend use J that is at least the dimension of predictor, i.e. the column number of the X matrix.
+#' @param type a string. It specifies what kind of basis functions are used. The default is (aperiodic) cosine basis functions ('cosine'), which is enough for generic usage.
 #' @param interaction_order a number. It also controls the model complexity. 1 means fitting an additive model, 2 means fitting a model allows, 3 means interaction terms between 3 dimensions of the feature, etc. The default is 3. 
 #' For large sample size, lower dimension problems, try a larger value (but need to be smaller than the dimension of original features); for smaller sample size and higher dimensional problems, try set it to a smaller value (1 or 2).
 #' @param omega the rate of dimension-reduction parameter. Default is 0.51, usually do not need to change.
@@ -27,9 +27,7 @@
 #' xdim <- 1 #1 dimensional feature
 #' #generate 1000 training samples
 #' TrainData <- GenSamples(s.size = 1000, xdim = xdim)
-#' #use 50 cosine basis functions
-#' type <- 'cosine'
-#' sieve.model <- sieve.sgd.preprocess(X = TrainData[,2:(xdim+1)], type = type)
+#' sieve.model <- sieve.sgd.preprocess(X = TrainData[,2:(xdim+1)])
 #' @export
 #'
 sieve.sgd.preprocess <- function(X, s = c(2), r0 = c(2), J = c(1), type = c('cosine'), 
@@ -104,6 +102,7 @@ sieve.sgd.preprocess <- function(X, s = c(2), r0 = c(2), J = c(1), type = c('cos
 #' @param sieve.model a list initiated using sieve.sgd.preprocess. Check the documentation of sieve.sgd.preprocess for more information.
 #' @param X a data frame containing prediction features/ independent variables. 
 #' @param Y training outcome.
+#' @param cv_weight_rate this governs the divergence rate of rolling validation statistics. Default is set to be 1 and in general does not need to be changed.
 #' 
 #' @return A list. It contains the fitted regression coefficients and progressive validation statistics for each hyperparameter combination.
 #' \item{s.size.sofar}{a number. Number of samples has been processed so far.}
@@ -115,7 +114,7 @@ sieve.sgd.preprocess <- function(X, s = c(2), r0 = c(2), J = c(1), type = c('cos
 #' \item{norm_para}{a matrix. It records how each dimension of the feature/predictor is rescaled, which is useful when rescaling the testing sample's predictors.}
 
 #' @examples 
-#' frho.para <- xdim <- 2 ##predictor dimension
+#' frho.para <- xdim <- 1 ##predictor dimension
 #' frho <- 'additive' ###truth is a sum of absolute functions 
 #' type <- 'cosine' ###use cosine functions as the basis functions
 #' #generate training data
@@ -257,6 +256,7 @@ sieve.sgd.solver <- function(sieve.model, X, Y,
   # }
   # print(rolling.cvs/sieve.model$s.size.sofar)
   # print(which.min(rolling.cvs))
+  sieve.model <- clean_up_result(sieve.model)
   return(sieve.model)
 
 }
@@ -297,7 +297,7 @@ sieve.sgd.solver <- function(sieve.model, X, Y,
 #' \item{inf.list}{In each entry of the list inf.list, the array prdy is the predicted outcome under the given hyperparameter combination.}
 
 #' @examples 
-#' frho.para <- xdim <- 2 ##predictor dimension
+#' frho.para <- xdim <- 1 ##predictor dimension
 #' frho <- 'additive' ###truth is a sum of absolute functions 
 #' type <- 'cosine' ###use cosine functions as the basis functions
 #' #generate training data
@@ -319,8 +319,8 @@ sieve.sgd.solver <- function(sieve.model, X, Y,
 #' NewData <- GenSamples(s.size = 5e2, xdim = xdim, 
 #'                       frho.para = frho.para, 
 #'                       frho = frho, noise.para = 0.1)
-#' sieve.model.with.prdy <- sieve.sgd.predict(sieve.model, X = NewData[, 2:(xdim+1)])
-#' 
+#' sieve.model <- sieve.sgd.predict(sieve.model, X = NewData[, 2:(xdim+1)])
+#' plot(NewData[, 2:(xdim+1)], sieve.model$best_model$prdy)
 #' @export
 #' 
 sieve.sgd.predict <- function(sieve.model, X){
@@ -366,10 +366,69 @@ sieve.sgd.predict <- function(sieve.model, X){
     sieve.model$inf.list[[m]]$prdy <- tmp.prdy
   }
   
+  sieve.model <- clean_up_result(sieve.model)
+  print('find the best model prediction at')
+  print('sieve.model$best_model$prdy')
   return(sieve.model)
   
 }
 
+#' Clean up the fitted model
+#' 
+#' @param sieve.model a sieve sgd model.
+#' @return a processed sieve.model, adding function names and extract the best model
+#' @export
+clean_up_result <- function(sieve.model){
+  index.matrix <- sieve.model$index.matrix
+  index.row.prod <- sieve.model$index.row.prod
+  basis_type <- sieve.model$type
+  name_vector <- rep(NA, nrow(index.matrix))
+  
+  ##determine which model is the best according to rolling validation
+  collect_cv_stat <- function(sieve.model){
+    num_of_hyperpara <- length(sieve.model$inf.list)
+    all_cv_stat <- NULL
+    for(curr_hyperpara in 1:num_of_hyperpara){
+      all_cv_stat <- c(all_cv_stat, sieve.model$inf.list[[curr_hyperpara]]$rolling.cv)
+    }
+    print('the best model index is')
+    print(which.min(all_cv_stat))
+    print('find it at sieve.model$best_model')
+    return(which.min(all_cv_stat))
+  }
+  
+  best_model_index <- collect_cv_stat(sieve.model)
+  sieve.model$best_model <- sieve.model$inf.list[[best_model_index]]
+  
+  
+  ####give the basis functions name
+  spell_out_one_cosine_basis <- function(instruction_vector){
+    basis_function_string <- NULL
+    for(covariate_dimension in 1:length(instruction_vector)){
+      
+      if(instruction_vector[covariate_dimension] > 1){
+        basis_function_string <- paste0(basis_function_string, '*cos(pi*',instruction_vector[covariate_dimension]- 1, '*x[', covariate_dimension,'])')
+      }
+    }
+    if(is.null(basis_function_string)){
+      basis_function_string <- '1'
+    }else{
+      basis_function_string <- gsub("^\\*(.+)", "\\1", basis_function_string)
+    }
+    
+    return(basis_function_string)
+  }
+  
+  if(basis_type == 'cosine'){
+    for(basis_index in 1:length(index.row.prod)){
+      instruction_vector <- index.matrix[basis_index,]
+      name_vector[basis_index] <- spell_out_one_cosine_basis(instruction_vector)
+    }
+  }
+  
+  names(sieve.model$best_model$beta.f) <- name_vector[1:length(sieve.model$best_model$beta.f)]
+  return(sieve.model)
+}
 
 ######things i need to do
 ####prevent float number overflow

@@ -4,7 +4,7 @@
 \alias{sieve.sgd.solver}
 \title{Fit sieve-SGD estimators, using progressive validation for hyperparameter tuning.}
 \usage{
-sieve.sgd.solver(sieve.model, X, Y)
+sieve.sgd.solver(sieve.model, X, Y, cv_weight_rate = 1)
 }
 \arguments{
 \item{sieve.model}{a list initiated using sieve.sgd.preprocess. Check the documentation of sieve.sgd.preprocess for more information.}
@@ -12,6 +12,8 @@ sieve.sgd.solver(sieve.model, X, Y)
 \item{X}{a data frame containing prediction features/ independent variables.}
 
 \item{Y}{training outcome.}
+
+\item{cv_weight_rate}{this governs the divergence rate of rolling validation statistics. Default is set to be 1 and in general does not need to be changed.}
 }
 \value{
 A list. It contains the fitted regression coefficients and progressive validation statistics for each hyperparameter combination.
@@ -27,7 +29,7 @@ A list. It contains the fitted regression coefficients and progressive validatio
 Fit sieve-SGD estimators, using progressive validation for hyperparameter tuning.
 }
 \examples{
-frho.para <- xdim <- 2 ##predictor dimension
+frho.para <- xdim <- 1 ##predictor dimension
 frho <- 'additive' ###truth is a sum of absolute functions 
 type <- 'cosine' ###use cosine functions as the basis functions
 #generate training data
